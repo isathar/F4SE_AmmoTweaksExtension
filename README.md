@@ -48,7 +48,7 @@ Script Usage:
 -- To edit a weapon's ObjectReference (generally only available for dropped or persistent weapons), create a new InstanceData:Owner struct and fill its owner property with the reference and pass it:
 
     WeapInstance = new InstanceData:Owner
-    WeapInstance.owner = (self as ObjectReference)
+    WeapInstance.owner = (YourObjectReference)
 
 
 - GetAimModel() returns 'none' if the weapon's AimModel has been modified by any scripts or ObjectMods. 
