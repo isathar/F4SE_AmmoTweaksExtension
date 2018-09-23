@@ -1,0 +1,150 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\f4se\GameAPI.cpp" />
+    <ClCompile Include="..\f4se\GameExtraData.cpp" />
+    <ClCompile Include="..\f4se\GameForms.cpp" />
+    <ClCompile Include="..\f4se\GameFormComponents.cpp" />
+    <ClCompile Include="..\f4se\GameObjects.cpp" />
+    <ClCompile Include="..\f4se\GameReferences.cpp" />
+    <ClCompile Include="..\f4se\GameRTTI.cpp" />
+    <ClCompile Include="..\f4se\GameSettings.cpp" />
+    <ClCompile Include="..\f4se\GameTypes.cpp" />
+    <ClCompile Include="..\f4se\GameUtilities.cpp" />
+    <ClCompile Include="..\f4se\PapyrusArgs.cpp" />
+    <ClCompile Include="..\f4se\PapyrusEvents.cpp" />
+    <ClCompile Include="..\f4se\PapyrusInterfaces.cpp" />
+    <ClCompile Include="..\f4se\PapyrusNativeFunctions.cpp" />
+    <ClCompile Include="..\f4se\PapyrusInstanceData.cpp" />
+    <ClCompile Include="..\f4se\PapyrusStruct.cpp" />
+    <ClCompile Include="..\f4se\PapyrusUtilities.cpp" />
+    <ClCompile Include="..\f4se\PapyrusValue.cpp" />
+    <ClCompile Include="..\f4se\PapyrusVM.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="PapyrusAT.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\common\common_vc14.vcxproj">
+      <Project>{D4C128A1-73DC-4941-A453-CE55AF239BA8}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\f4se_common\f4se_common_vc14.vcxproj">
+      <Project>{20c6411c-596f-4b85-be4e-8bc91f59d8a6}</Project>
+      <Private>false</Private>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyLocalSatelliteAssemblies>false</CopyLocalSatelliteAssemblies>
+      <LinkLibraryDependencies>true</LinkLibraryDependencies>
+      <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\f4se\GameAPI.h" />
+    <ClInclude Include="..\f4se\GameExtraData.h" />
+    <ClInclude Include="..\f4se\GameForms.h" />
+    <ClInclude Include="..\f4se\GameFormComponents.h" />
+    <ClInclude Include="..\f4se\GameObjects.h" />
+    <ClInclude Include="..\f4se\GameReferences.h" />
+    <ClInclude Include="..\f4se\GameRTTI.h" />
+    <ClInclude Include="..\f4se\GameSettings.h" />
+    <ClInclude Include="..\f4se\GameTypes.h" />
+    <ClInclude Include="..\f4se\GameUtilities.h" />
+    <ClInclude Include="..\f4se\PapyrusArgs.h" />
+    <ClInclude Include="..\f4se\PapyrusEvents.h" />
+    <ClInclude Include="..\f4se\PapyrusInterfaces.h" />
+    <ClInclude Include="..\f4se\PapyrusNativeFunctions.h" />
+    <ClInclude Include="..\f4se\PapyrusInstanceData.h" />
+    <ClInclude Include="..\f4se\PapyrusStruct.h" />
+    <ClInclude Include="..\f4se\PapyrusUtilities.h" />
+    <ClInclude Include="..\f4se\PapyrusValue.h" />
+    <ClInclude Include="..\f4se\PapyrusVM.h" />
+    <ClInclude Include="PapyrusAT.h" />
+    <ClInclude Include="Config.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\f4se\PapyrusEventsDef.inl" />
+    <None Include="..\f4se\PapyrusEventsDef_Base.inl" />
+    <None Include="..\f4se\PapyrusNativeFunctionDef.inl" />
+    <None Include="..\f4se\PapyrusNativeFunctionDef_Base.inl" />
+    <None Include="exports.def" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{A698FA2E-50D2-4898-B15E-8B14E710D9C4}</ProjectGuid>
+    <RootNamespace>AmmoTweaks</RootNamespace>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <ProjectName>AmmoTweaks</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)\..;$(SolutionDir)\..\..;$(SolutionDir)\..\f4se;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>common\IPrefix.h</ForcedIncludeFiles>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ModuleDefinitionFile>exports.def</ModuleDefinitionFile>
+      <AdditionalLibraryDirectories>
+      </AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)\..;$(SolutionDir)\..\..;$(SolutionDir)\..\f4se;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>common\IPrefix.h</ForcedIncludeFiles>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <ModuleDefinitionFile>exports.def</ModuleDefinitionFile>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
