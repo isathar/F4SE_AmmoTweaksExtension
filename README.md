@@ -22,7 +22,7 @@ Additional Compiling Instructions:
 -- It's probably best to copy F4SE's source files (along with the included source) to another directory to keep the base source files clean.
 
 
-- Once it's loaded in Visual Studio, you'll need to add "$(SolutionDir)\..\.." to the f4se_common_vc14 project's 'Additional Include Directories' (found in the project's properties under 'C/C++ \ General' )
+- Once it's loaded in Visual Studio, you'll need to add "$(SolutionDir)\\..\\.." to the f4se_common_vc14 project's 'Additional Include Directories' (found in the project's properties under 'C/C++ \ General' )
 
 -- This is required to get the static library for f4se_common_vc14 to compile.
 
