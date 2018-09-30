@@ -79,9 +79,6 @@ int Function GetVersionCode() native global
 ; prints the instance's AimModel variables to the log
 Function LogAimModelVars(InstanceData:Owner akOwner) native global
 
-; prints the instance's ZoomData variables to the log
-Function LogZoomDataVars(InstanceData:Owner akOwner) native global
-
 Function LogWeaponStats_Gun(InstanceData:Owner akOwner) native global
 
 
@@ -187,35 +184,6 @@ Function ModRecoil_Percent(InstanceData:Owner akOwner, float fPercent) native gl
 ; 		- Mod the instance's Cone of Fire variables by a percentage (as 0.0-1.0)
 Function ModAccuracy_Percent(InstanceData:Owner akOwner, float fPercent) native global
 
-
-;****************************   ZoomData   **********************************
-; - all changes to ZoomData require the weapon to be unequipped to take effect
-
-; returns the instance's ZoomData
-; - any changes to the ZoomData will cause this to return none
-Form Function GetZoomData(InstanceData:Owner akOwner) native global
-
-; sets the instance's ZoomData 
-;     Warning: also reverts any scripted modifiers to ZoomData
-Function SetZoomData(InstanceData:Owner akOwner, Form newZoomData) native global
-
-; 		- FoV Multiplier
-float Function GetZoomData_FoVMult(InstanceData:Owner akOwner) native global
-Function SetZoomData_FoVMult(InstanceData:Owner akOwner, float fNewVal) native global
-
-; 		- HUD Overlay Index
-int Function GetZoomData_OverlayIndex(InstanceData:Owner akOwner) native global
-Function SetZoomData_OverlayIndex(InstanceData:Owner akOwner, int iNewVal) native global
-
-; 		- ImageSpace Modifier
-Form Function GetZoomData_ImageSpaceMod(InstanceData:Owner akOwner) native global
-Function SetZoomData_ImageSpaceMod(InstanceData:Owner akOwner, Form newImageSpace) native global
-
-; 		- Camera Offset
-float Function GetZoomData_CamOffset_X(InstanceData:Owner akOwner) native global
-float Function GetZoomData_CamOffset_Y(InstanceData:Owner akOwner) native global
-float Function GetZoomData_CamOffset_Z(InstanceData:Owner akOwner) native global
-Function SetZoomData_CamOffset(InstanceData:Owner akOwner, float fNewValX, float fNewValY, float fNewValZ) native global
 
 
 
