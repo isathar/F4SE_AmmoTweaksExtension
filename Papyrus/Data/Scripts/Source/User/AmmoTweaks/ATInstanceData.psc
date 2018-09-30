@@ -20,29 +20,55 @@ scriptname AmmoTweaks:ATInstanceData native hidden
 ;    Arc rotate: What angle (in degrees, clockwise) is the center of the recoil arc. 
 ;			0 is straight up, 90 is straight right, 180 is straight down, etc...
 ;    Diminish spring force: How fast/much the crosshair returns to its original position after shooting.
-;    Diminish sights mult: 
+;    Diminish sights mult: multiplier applied to diminish spring force while sighted?
 ;    Max per shot: Maximum amount of recoil per shot.
 ;    Min per shot: Minimum amount of recoil per shot.
 ;    Hip mult: Multiplier for recoil when not aiming down sights.
-;    Runaway Recoil shots: - No Idea
+;    Runaway Recoil shots: number of shots before recoil becomes overwhelming?
 ;    Base Stability: Higher number reduces the scoped sway. Not sure why this is grouped with recoil.
 
 
+; Structs
+; - used to pass weapon stats that need to be modified to the plugin
 
-; used to update AT weapon stats without calling a bunch of functions back to back
+; stores a weapon's 'clean' stats (without scripted modifiers)
 Struct WeaponStats
-	Ammo 		AmmoItem = 	none
-	Projectile 	ProjectileOverride = none
+	Form 	AmmoItem = 			none
+	Form	ProjOverride = 		none
+	Form	ImpactDataForm = 	none
+	Form	NPCAmmoList = 		none
 	
-	float 		fDamageMult = 1.0
-	float 		fRangeMult = 1.0
+	float 	fDamage = 			1.0
+	float 	fCritDmgMult =		1.0
+	float 	fCritChanceMult =	1.0
+	float 	fProjectileCount = 	1.0
 	
-	float 		fRecoilMult = 1.0
-	float 		fCoFMult = 1.0
+	float 	fMaxRange = 		256.0
+	float 	fMinRange = 		64.0
 	
-	int 		iNumProjectiles = 1
+	float 	fRecoilMax = 		1.0
+	float 	fRecoilMin = 		1.0
+	float 	fCoFMax = 			1.0
+	float 	fCoFMin = 			1.0
 EndStruct
 
+; stores scripted overrides and multipliers to a weapon's stats
+Struct WeaponStatsMod
+	Form 	AmmoItem = 			none
+	Form	ProjOverride = 		none
+	Form	ImpactDataForm = 	none
+	Form	NPCAmmoList = 		none
+	
+	float 	fDamageMult = 		1.0
+	float 	fCritDmgMult =		1.0
+	float 	fCritChanceMult =	1.0
+	float 	fProjectileMult = 	1.0
+	
+	float 	fRangeMult = 		1.0
+	
+	float 	fRecoilMult = 		1.0
+	float 	fCoFMult = 			1.0
+EndStruct
 
 
 
@@ -55,6 +81,10 @@ Function LogAimModelVars(InstanceData:Owner akOwner) native global
 
 ; prints the instance's ZoomData variables to the log
 Function LogZoomDataVars(InstanceData:Owner akOwner) native global
+
+Function LogWeaponStats_Gun(InstanceData:Owner akOwner) native global
+
+
 
 
 ;****************************  ImpactDataSet  **********************************
@@ -187,3 +217,8 @@ float Function GetZoomData_CamOffset_Y(InstanceData:Owner akOwner) native global
 float Function GetZoomData_CamOffset_Z(InstanceData:Owner akOwner) native global
 Function SetZoomData_CamOffset(InstanceData:Owner akOwner, float fNewValX, float fNewValY, float fNewValZ) native global
 
+
+
+WeaponStats Function GetWeaponBaseStats_Gun(InstanceData:Owner akOwner, WeaponStats CurStats) native global
+
+Function UpdateWeaponStats_Gun(InstanceData:Owner akOwner, WeaponStatsMod ModStats, WeaponStats CurStats) native global

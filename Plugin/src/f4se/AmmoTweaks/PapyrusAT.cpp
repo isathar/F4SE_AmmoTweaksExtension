@@ -26,8 +26,9 @@ bool PapyrusAmmoTweaks::RegisterPapyrus(VirtualMachine * vm)
 namespace PapyrusAmmoTweaks {
 	DECLARE_STRUCT(Owner, "InstanceData");
 	DECLARE_STRUCT(WeaponStats, "AmmoTweaks:ATInstanceData");
+	DECLARE_STRUCT(WeaponStatsMod, "AmmoTweaks:ATInstanceData");
 
-
+	// from f4se/PapyrusInstanceData
 	TBO_InstanceData * GetInstanceData(Owner* thisInstance)
 	{
 		if (!thisInstance || thisInstance->IsNone())
@@ -106,7 +107,8 @@ namespace PapyrusAmmoTweaks {
 
 		return nullptr;
 	}
-
+	
+	// also from f4se/PapyrusInstanceData
 	TESObjectWEAP::InstanceData * GetWeaponInstanceData(Owner* thisInstance)
 	{
 		TBO_InstanceData * instanceData = GetInstanceData(thisInstance);
@@ -638,56 +640,142 @@ namespace PapyrusAmmoTweaks {
 
 	//*******************************************************************************
 	// Weapon Update
-
-	void UpdateWeaponStats_Gun(StaticFunctionTag*, Owner thisInstance, WeaponStats* statsUpdate)
+	void LogWeaponStats_Gun(StaticFunctionTag*, Owner thisInstance)
 	{
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
-		if (instanceData && statsUpdate) {
-			float fDamageMult = 1.0;
-			float fRangeMult = 1.0;
-			float fRecoilMult = 1.0;
-			float fCoFMult = 1.0;
-			UInt32 iNumProjectiles = 1;
-			TESAmmo* AmmoItem = nullptr;
-			BGSProjectile* ProjectileOverride = nullptr;
-			BGSAimModel* aimModel = instanceData->aimModel;
-
-			if (statsUpdate->Get("AmmoItem", &AmmoItem)) {
-				if (AmmoItem)
-					instanceData->ammo = AmmoItem;
-			}
-
-			if (statsUpdate->Get("fDamageMult", &fDamageMult))
-				instanceData->baseDamage = max(0, min((UInt32)(fDamageMult * instanceData->baseDamage), 0xFFFF));
-
-			if (statsUpdate->Get("fRangeMult", &fRangeMult))
-				instanceData->maxRange = max(0.0, fRangeMult * instanceData->maxRange);
+		if (instanceData) {
+			_MESSAGE("\nCurrent Stats:");
+			_MESSAGE("      Damage           : %i", instanceData->baseDamage);
+			_MESSAGE("      Range            : %.2f - %.2f", instanceData->minRange, instanceData->maxRange);
+			_MESSAGE("\n      Crit Dmg Mult    : %.2f", instanceData->critDamageMult);
+			_MESSAGE("      Crit Chance Mult : %.2f", instanceData->critChargeBonus);
 
 			if (instanceData->firingData) {
-				if (statsUpdate->Get("ProjectileOverride", &ProjectileOverride)) {
-					if (ProjectileOverride)
-						instanceData->firingData->projectileOverride = ProjectileOverride;
-				}
-
-				if (statsUpdate->Get("iNumProjectiles", &iNumProjectiles))
-					instanceData->firingData->numProjectiles = iNumProjectiles;
+				if (instanceData->firingData->numProjectiles > 0x200)
+					_MESSAGE("      Projectiles      : %i", instanceData->firingData->numProjectiles - 0x200);
+				else
+					_MESSAGE("      Projectiles      : %i", instanceData->firingData->numProjectiles);
 			}
 
-			if (aimModel) {
-				if (statsUpdate->Get("fRecoilMult", &fRecoilMult)) {
-					float fRecoilMin = aimModel->fRec_MinPerShot;
-					float fRecoilMax = aimModel->fRec_MaxPerShot;
-					float fHipMult = aimModel->fRec_HipMult;
-					aimModel->fRec_MinPerShot = max(0.0, fRecoilMin + (fRecoilMin * fRecoilMult));
-					aimModel->fRec_MaxPerShot = max(0.0, fRecoilMax + (fRecoilMax * fRecoilMult));
-					aimModel->fRec_HipMult = max(0.0, fHipMult + (fHipMult * fRecoilMult));
-				}
+			if (instanceData->aimModel) {
+				_MESSAGE("      Recoil / Shot    : %.2f - %.2f", instanceData->aimModel->fRec_MinPerShot, instanceData->aimModel->fRec_MaxPerShot);
+				_MESSAGE("      Cone of Fire/Shot: %.2f - %.2f", instanceData->aimModel->fCoF_IncrPerShot);
+			}
+		}
+	}
 
-				if (statsUpdate->Get("fCoFMult", &fCoFMult)) {
-					float fCoFMin = aimModel->fCoF_MinAngle;
-					float fCoFMax = aimModel->fCoF_MaxAngle;
-					aimModel->fCoF_MinAngle = max(0.0, fCoFMin + (fCoFMin * fCoFMult));
-					aimModel->fCoF_MaxAngle = max(0.0, fCoFMax + (fCoFMax * fCoFMult));
+	WeaponStats GetWeaponBaseStats_Gun(StaticFunctionTag*, Owner thisInstance, WeaponStats statsBase)
+	{
+		auto instanceData = GetWeaponInstanceData(&thisInstance);
+		if (instanceData) {
+			statsBase.Set("fDamage", (float)instanceData->baseDamage);
+			statsBase.Set("fCritDmgMult", instanceData->critDamageMult);
+			statsBase.Set("fCritChanceMult", instanceData->critChargeBonus);
+			
+			statsBase.Set("fMaxRange", instanceData->maxRange);
+			statsBase.Set("fMinRange", instanceData->minRange);
+
+			statsBase.Set("ImpactDataForm", (TESForm*)(instanceData->unk58));
+
+			if (instanceData->firingData) {
+				statsBase.Set("ProjOverride", instanceData->firingData->projectileOverride);
+				statsBase.Set("fProjectileCount", (float)instanceData->firingData->numProjectiles);
+			}
+
+			if (instanceData->aimModel) {
+				statsBase.Set("fRecoilMax", instanceData->aimModel->fRec_MaxPerShot);
+				statsBase.Set("fRecoilMin", instanceData->aimModel->fRec_MinPerShot);
+				statsBase.Set("fCoFMax", instanceData->aimModel->fCoF_MaxAngle);
+				statsBase.Set("fCoFMin", instanceData->aimModel->fCoF_MinAngle);
+			}
+		}
+
+		return statsBase;
+	}
+
+	void UpdateWeaponStats_Gun(StaticFunctionTag*, Owner thisInstance, WeaponStatsMod statsUpdate, WeaponStats statsBase)
+	{
+		auto instanceData = GetWeaponInstanceData(&thisInstance);
+		if (instanceData) {
+			TESAmmo* ammoItem = nullptr;
+			TESLevItem* ammoList = nullptr;
+			BGSProjectile* projectileOverride = nullptr;
+			TESForm* impactDataForm = nullptr;
+			BGSImpactDataSet* finalImpactData = nullptr;
+			
+			float fProjectileCount, fProjectileMult, fDamage, fDamageMult, fCritDamage, fCritChance, fCritDamageMult, fCritChanceMult = 1.0;
+			float fRangeMult, fRecoilMin, fRecoilMax, fRecoilMult, fCoFMax, fCoFMin, fCofMult = 1.0;
+			float fMinRange, fMaxRange = 256.0;
+
+			// ammo
+			if (statsUpdate.Get("AmmoItem", &ammoItem)) {
+				if (ammoItem)
+					instanceData->ammo = ammoItem;
+			}
+
+			// NPC ammo list
+			if (statsUpdate.Get("NPCAmmoList", &ammoList)) {
+				if (ammoList)
+					instanceData->addAmmoList = ammoList;
+			}
+			
+			if (instanceData->firingData) {
+				// projectile
+				if (statsUpdate.Get("ProjOverride", &projectileOverride)) {
+					if (projectileOverride)
+						instanceData->firingData->projectileOverride = projectileOverride;
+				}
+				// projectile count
+				if (statsUpdate.Get("fProjectileMult", &fProjectileMult) && statsBase.Get("fProjectileCount", &fProjectileCount))
+					instanceData->firingData->numProjectiles = max(1, min((UInt32)floor(fProjectileCount * fProjectileMult), 0xFFFF));
+			}
+
+			// ImpactDataSet
+			if (statsUpdate.Get("ImpactDataForm", &impactDataForm)) {
+				if (impactDataForm) {
+					finalImpactData = DYNAMIC_CAST(impactDataForm, TESForm, BGSImpactDataSet);
+					if (finalImpactData)
+						instanceData->unk58 = finalImpactData;
+				}
+			}
+
+			// Damage
+			if (statsUpdate.Get("fDamageMult", &fDamageMult) && statsBase.Get("fDamage", &fDamage))
+				instanceData->baseDamage = max(0, min((UInt32)floor(fDamage * fDamageMult), 0xFFFF));
+
+			// Crit Damage
+			if (statsUpdate.Get("fCritDmgMult", &fCritDamageMult) && statsBase.Get("fCritDmgMult", &fCritDamage))
+				instanceData->critDamageMult = max(0.0, fCritDamage * fCritDamageMult);
+			
+			// Crit Chance
+			if (statsUpdate.Get("fCritChanceMult", &fCritChanceMult) && statsBase.Get("fCritChanceMult", &fCritChance))
+				instanceData->critChargeBonus = max(0.0, fCritChance * fCritChanceMult);
+
+			
+
+			// Range
+			if (statsUpdate.Get("fRangeMult", &fRangeMult)) {
+				if (statsBase.Get("fMaxRange", &fMaxRange))
+					instanceData->maxRange = max(1.0, fMaxRange * fRangeMult);
+				if (statsBase.Get("fMinRange", &fMinRange))
+					instanceData->minRange = max(1.0, fMinRange * fRangeMult);
+			}
+
+			// aim model
+			if (instanceData->aimModel) {
+				// Recoil
+				if (statsUpdate.Get("fRecoilMult", &fRecoilMult)) {
+					if (statsBase.Get("fRecoilMax", &fRecoilMax))
+						instanceData->aimModel->fRec_MaxPerShot = max(0.0, fRecoilMax * fRecoilMult);
+					if (statsBase.Get("fRecoilMin", &fRecoilMin))
+						instanceData->aimModel->fRec_MinPerShot = max(0.0, fRecoilMin * fRecoilMult);
+				}
+				// Cone of Fire
+				if (statsUpdate.Get("fCofMult", &fCofMult)) {
+					if (statsUpdate.Get("fCoFMax", &fCoFMax))
+						instanceData->aimModel->fCoF_MaxAngle = max(0.0, fCoFMax * fCofMult);
+					if (statsUpdate.Get("fCoFMin", &fCoFMin))
+						instanceData->aimModel->fCoF_MinAngle = max(0.0, fCoFMin * fCofMult);
 				}
 			}
 
@@ -821,5 +909,14 @@ void PapyrusAmmoTweaks::RegisterFuncs(VirtualMachine* vm) {
 	vm->RegisterFunction(
 		new NativeFunction4 <StaticFunctionTag, void, Owner, float, float, float>("SetZoomData_CamOffset", SCRIPT_NAME, PapyrusAmmoTweaks::SetZoomData_CamOffset, vm));
 
+	// Weapon update
+	vm->RegisterFunction(
+		new NativeFunction1 <StaticFunctionTag, void, Owner>("LogWeaponStats_Gun", SCRIPT_NAME, PapyrusAmmoTweaks::LogWeaponStats_Gun, vm));
+	vm->RegisterFunction(
+		new NativeFunction2 <StaticFunctionTag, WeaponStats, Owner, WeaponStats>("GetWeaponBaseStats_Gun", SCRIPT_NAME, PapyrusAmmoTweaks::GetWeaponBaseStats_Gun, vm));
+	vm->RegisterFunction(
+		new NativeFunction3 <StaticFunctionTag, void, Owner, WeaponStatsMod, WeaponStats>("UpdateWeaponStats_Gun", SCRIPT_NAME, PapyrusAmmoTweaks::UpdateWeaponStats_Gun, vm));
+
+	
 	
 }
