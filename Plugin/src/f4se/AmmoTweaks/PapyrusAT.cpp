@@ -162,12 +162,12 @@ namespace PapyrusAmmoTweaks {
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
 		if (instanceData && instanceData->aimModel) {
 			if (instanceData->aimModel->formID > 0) {
-				_MESSAGE("Current AimModel: %08X", instanceData->aimModel->formID);
+				_MESSAGE("\nCurrent AimModel: %08X", instanceData->aimModel->formID);
 				return instanceData->aimModel;
 			} else
-				_MESSAGE("Current AimModel: *edited*", instanceData->aimModel->formID);
-		}
-		_MESSAGE("Error: Failed to get AimModel");
+				_MESSAGE("\nCurrent AimModel: *edited*", instanceData->aimModel->formID);
+		} else
+			_MESSAGE("Error: Failed to get AimModel");
 		return nullptr;
 	}
 	void SetAimModel(StaticFunctionTag*, Owner thisInstance, TESForm* aimModelForm)
@@ -185,15 +185,18 @@ namespace PapyrusAmmoTweaks {
 	{
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
 		if (instanceData && instanceData->aimModel) {
-			_MESSAGE("\nCurrent AimModel: %08X - \n Cone of Fire -", instanceData->aimModel->formID);
-			_MESSAGE("    Min Angle:              %f \n    Max Angle:              %f", instanceData->aimModel->fCoF_MinAngle, instanceData->aimModel->fCoF_MaxAngle);
+			if (instanceData->aimModel->formID > 0)
+				_MESSAGE("\nAimModel: %08X - \n Cone of Fire -", instanceData->aimModel->formID);
+			else
+				_MESSAGE("\nAimModel: *edited* - \n Cone of Fire -", instanceData->aimModel->formID);
+			_MESSAGE("    Angle:                  %f - %f", instanceData->aimModel->fCoF_MinAngle, instanceData->aimModel->fCoF_MaxAngle);
 			_MESSAGE("    Increase per Shot:      %f \n    Decrease per Second:    %f \n    Decrease Delay ms:      %i", instanceData->aimModel->fCoF_IncrPerShot, instanceData->aimModel->fCoF_DecrPerSec, instanceData->aimModel->iCoF_DecrDelayMS);
 			_MESSAGE("    Sneak Multiplier:       %f \n    Iron Sights Multiplier: %f", instanceData->aimModel->fCoF_SneakMult, instanceData->aimModel->fCoF_IronSightsMult);
-			_MESSAGE(" Recoil - \n    Max per Shot:           %f \n    Min per Shot:           %f", instanceData->aimModel->fRec_MaxPerShot, instanceData->aimModel->fRec_MinPerShot);
+			_MESSAGE(" Recoil - \n    Amount per Shot:        %f - %f", instanceData->aimModel->fRec_MinPerShot, instanceData->aimModel->fRec_MaxPerShot);
 			_MESSAGE("    Arc:                    %f \n    Arc Rotate:             %f", instanceData->aimModel->fRec_ArcMaxDegrees, instanceData->aimModel->fRec_ArcRotate);
 			_MESSAGE("    Diminish Spring Force:  %f \n    Diminish Sights:        %f", instanceData->aimModel->fRec_DimSpringForce, instanceData->aimModel->fRec_DimSightsMult);
 			_MESSAGE("    Hip Multiplier:         %f \n    Base Stability:         %f", instanceData->aimModel->fRec_HipMult, instanceData->aimModel->fBaseStability);
-			_MESSAGE("    Runaway Shots:          %i", instanceData->aimModel->iRec_RunawayShots);
+			_MESSAGE("    Shots/Runaway:          %i", instanceData->aimModel->iRec_RunawayShots);
 		}
 		else
 			_MESSAGE("No instance or AimModel");
@@ -504,162 +507,27 @@ namespace PapyrusAmmoTweaks {
 
 
 	//*******************************************************************************
-	// ZoomData:
-	TESForm* GetZoomData(StaticFunctionTag*, Owner thisInstance)
-	{
-		auto instanceData = GetWeaponInstanceData(&thisInstance);
-		if (instanceData && instanceData->zoomData) {
-			if (instanceData->zoomData->formID > 0) {
-				_MESSAGE("Current ZoomData: %08X", instanceData->zoomData->formID);
-				return instanceData->zoomData;
-			}
-		}
-		_MESSAGE("Error: Failed to get ZoomData");
-		return nullptr;
-	}
-	void SetZoomData(StaticFunctionTag*, Owner thisInstance, TESForm* zoomDataForm)
-	{
-		auto instanceData = GetWeaponInstanceData(&thisInstance);
-		BGSZoomData * newZoomData = DYNAMIC_CAST(zoomDataForm, TESForm, BGSZoomData);
-		if (instanceData && instanceData->zoomData && newZoomData) {
-			_MESSAGE("New ZoomData: %08X", newZoomData->formID);
-			instanceData->zoomData = newZoomData;
-		}
-	}
-	void LogZoomDataVars(StaticFunctionTag*, Owner thisInstance)
-	{
-		auto instanceData = GetWeaponInstanceData(&thisInstance);
-		if (instanceData && instanceData->zoomData) {
-			_MESSAGE("\nCurrent ZoomData: %08X -", instanceData->zoomData->formID);
-			_MESSAGE("    FoV Multiplier:        %f", instanceData->zoomData->fovMultiplier);
-			_MESSAGE("    HUD Overlay:           %i", instanceData->zoomData->overlayIndex);
-			if (instanceData->zoomData->imageSpaceMod)
-				_MESSAGE("    Image Space Mod:       %08X", instanceData->zoomData->imageSpaceMod->formID);
-			else
-				_MESSAGE("    Image Space Mod:       none");
-			_MESSAGE("    Cam Offset:");
-			_MESSAGE("              - X:         %f", instanceData->zoomData->camOffset_X);
-			_MESSAGE("              - Y:         %f", instanceData->zoomData->camOffset_Y);
-			_MESSAGE("              - Z:         %f", instanceData->zoomData->camOffset_Z);
-		}
-		else
-			_MESSAGE("Error: Failed to get ZoomData");
-	}
-
-	//           - FoV Multiplier
-	float GetZoomData_FoVMult(StaticFunctionTag*, Owner thisInstance)
-	{
-		auto instanceData = GetWeaponInstanceData(&thisInstance);
-		if (instanceData && instanceData->zoomData) {
-			return instanceData->zoomData->fovMultiplier;
-		}
-		return 0.0;
-	}
-	void SetZoomData_FoVMult(StaticFunctionTag*, Owner thisInstance, float fNewVal)
-	{
-		auto instanceData = GetWeaponInstanceData(&thisInstance);
-		if (instanceData && instanceData->zoomData)
-			instanceData->zoomData->fovMultiplier = max(0.0, fNewVal);
-	}
-
-	//           - HUD Overlay Index
-	UInt32 GetZoomData_OverlayIndex(StaticFunctionTag*, Owner thisInstance)
-	{
-		auto instanceData = GetWeaponInstanceData(&thisInstance);
-		if (instanceData && instanceData->zoomData) {
-			return instanceData->zoomData->overlayIndex;
-		}
-		return 0;
-	}
-	void SetZoomData_OverlayIndex(StaticFunctionTag*, Owner thisInstance, UInt32 iNewVal)
-	{
-		auto instanceData = GetWeaponInstanceData(&thisInstance);
-		if (instanceData && instanceData->zoomData)
-			instanceData->zoomData->overlayIndex = max(0, iNewVal);
-	}
-
-	//			- ImageSpace Modifier
-	TESForm* GetZoomData_ImageSpaceMod(StaticFunctionTag*, Owner thisInstance)
-	{
-		auto instanceData = GetWeaponInstanceData(&thisInstance);
-		if (instanceData && instanceData->zoomData) {
-			if (instanceData->zoomData->imageSpaceMod->formID > 0) {
-				_MESSAGE("Current ZoomData:ImageSpaceMod: %08X", instanceData->zoomData->imageSpaceMod->formID);
-				return instanceData->zoomData->imageSpaceMod;
-			}
-		}
-		_MESSAGE("Error: Failed to get ZoomData:ImageSpaceMod");
-		return nullptr;
-	}
-	void SetZoomData_ImageSpaceMod(StaticFunctionTag*, Owner thisInstance, TESForm* imageSpaceForm)
-	{
-		auto instanceData = GetWeaponInstanceData(&thisInstance);
-		TESImageSpaceModifier * newZoomData = DYNAMIC_CAST(imageSpaceForm, TESForm, TESImageSpaceModifier);
-		if (instanceData && instanceData->zoomData && newZoomData) {
-			_MESSAGE("New ZoomData:ImageSpaceMod: %08X", newZoomData->formID);
-			instanceData->zoomData->imageSpaceMod = newZoomData;
-		}
-	}
-
-	//           - Camera Offset
-	float GetZoomData_CamOffset_X(StaticFunctionTag*, Owner thisInstance)
-	{
-		auto instanceData = GetWeaponInstanceData(&thisInstance);
-		if (instanceData && instanceData->zoomData) {
-			return instanceData->zoomData->camOffset_X;
-		}
-		return 0.0;
-	}
-	float GetZoomData_CamOffset_Y(StaticFunctionTag*, Owner thisInstance)
-	{
-		auto instanceData = GetWeaponInstanceData(&thisInstance);
-		if (instanceData && instanceData->zoomData) {
-			return instanceData->zoomData->camOffset_Y;
-		}
-		return 0.0;
-	}
-	float GetZoomData_CamOffset_Z(StaticFunctionTag*, Owner thisInstance)
-	{
-		auto instanceData = GetWeaponInstanceData(&thisInstance);
-		if (instanceData && instanceData->zoomData) {
-			return instanceData->zoomData->camOffset_Z;
-		}
-		return 0.0;
-	}
-	void SetZoomData_CamOffset(StaticFunctionTag*, Owner thisInstance, float fNewValX, float fNewValY, float fNewValZ)
-	{
-		auto instanceData = GetWeaponInstanceData(&thisInstance);
-		if (instanceData && instanceData->zoomData) {
-			instanceData->zoomData->camOffset_X = fNewValX;
-			instanceData->zoomData->camOffset_Y = fNewValY;
-			instanceData->zoomData->camOffset_Z = fNewValZ;
-			
-		}
-	}
-
-
-	//*******************************************************************************
 	// Weapon Update
 	void LogWeaponStats_Gun(StaticFunctionTag*, Owner thisInstance)
 	{
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
 		if (instanceData) {
 			_MESSAGE("\nCurrent Stats:");
-			_MESSAGE("      Damage           : %i", instanceData->baseDamage);
-			_MESSAGE("      Range            : %.2f - %.2f", instanceData->minRange, instanceData->maxRange);
-			_MESSAGE("\n      Crit Dmg Mult    : %.2f", instanceData->critDamageMult);
-			_MESSAGE("      Crit Chance Mult : %.2f", instanceData->critChargeBonus);
+			_MESSAGE("    Damage            : %i", instanceData->baseDamage);
+			_MESSAGE("    Range             : %.2f - %.2f", instanceData->minRange, instanceData->maxRange);
+			_MESSAGE("    Crit Dmg Mult     : %.2f", instanceData->critDamageMult);
+			_MESSAGE("    Crit Chance Mult  : %.2f", instanceData->critChargeBonus);
 
 			if (instanceData->firingData) {
 				if (instanceData->firingData->numProjectiles > 0x200)
-					_MESSAGE("      Projectiles      : %i", instanceData->firingData->numProjectiles - 0x200);
+					_MESSAGE("    Projectiles       : %i", instanceData->firingData->numProjectiles - 0x200);
 				else
-					_MESSAGE("      Projectiles      : %i", instanceData->firingData->numProjectiles);
+					_MESSAGE("    Projectiles       : %i", instanceData->firingData->numProjectiles);
 			}
 
 			if (instanceData->aimModel) {
-				_MESSAGE("      Recoil / Shot    : %.2f - %.2f", instanceData->aimModel->fRec_MinPerShot, instanceData->aimModel->fRec_MaxPerShot);
-				_MESSAGE("      Cone of Fire/Shot: %.2f - %.2f", instanceData->aimModel->fCoF_IncrPerShot);
+				_MESSAGE("    Recoil per Shot   : %.2f - %.2f", instanceData->aimModel->fRec_MinPerShot, instanceData->aimModel->fRec_MaxPerShot);
+				_MESSAGE("    Cone of Fire Angle: %.2f - %.2f", instanceData->aimModel->fCoF_MinAngle, instanceData->aimModel->fCoF_MaxAngle);
 			}
 		}
 	}
@@ -719,6 +587,7 @@ namespace PapyrusAmmoTweaks {
 					instanceData->addAmmoList = ammoList;
 			}
 			
+			// FiringData
 			if (instanceData->firingData) {
 				// projectile
 				if (statsUpdate.Get("ProjOverride", &projectileOverride)) {
@@ -747,11 +616,9 @@ namespace PapyrusAmmoTweaks {
 			if (statsUpdate.Get("fCritDmgMult", &fCritDamageMult) && statsBase.Get("fCritDmgMult", &fCritDamage))
 				instanceData->critDamageMult = max(0.0, fCritDamage * fCritDamageMult);
 			
-			// Crit Chance
+			// Crit Chance Mult/Crit Charge Bonus
 			if (statsUpdate.Get("fCritChanceMult", &fCritChanceMult) && statsBase.Get("fCritChanceMult", &fCritChance))
 				instanceData->critChargeBonus = max(0.0, fCritChance * fCritChanceMult);
-
-			
 
 			// Range
 			if (statsUpdate.Get("fRangeMult", &fRangeMult)) {
@@ -761,7 +628,7 @@ namespace PapyrusAmmoTweaks {
 					instanceData->minRange = max(1.0, fMinRange * fRangeMult);
 			}
 
-			// aim model
+			// AimModel
 			if (instanceData->aimModel) {
 				// Recoil
 				if (statsUpdate.Get("fRecoilMult", &fRecoilMult)) {
@@ -772,9 +639,9 @@ namespace PapyrusAmmoTweaks {
 				}
 				// Cone of Fire
 				if (statsUpdate.Get("fCofMult", &fCofMult)) {
-					if (statsUpdate.Get("fCoFMax", &fCoFMax))
+					if (statsBase.Get("fCoFMax", &fCoFMax))
 						instanceData->aimModel->fCoF_MaxAngle = max(0.0, fCoFMax * fCofMult);
-					if (statsUpdate.Get("fCoFMin", &fCoFMin))
+					if (statsBase.Get("fCoFMin", &fCoFMin))
 						instanceData->aimModel->fCoF_MinAngle = max(0.0, fCoFMin * fCofMult);
 				}
 			}
@@ -802,17 +669,11 @@ void PapyrusAmmoTweaks::RegisterFuncs(VirtualMachine* vm) {
 		new NativeFunction1 <StaticFunctionTag, TESForm*, Owner>("GetAimModel", SCRIPT_NAME, PapyrusAmmoTweaks::GetAimModel, vm));
 	vm->RegisterFunction(
 		new NativeFunction2 <StaticFunctionTag, void, Owner, TESForm*>("SetAimModel", SCRIPT_NAME, PapyrusAmmoTweaks::SetAimModel, vm));
-	vm->RegisterFunction(
-		new NativeFunction1 <StaticFunctionTag, TESForm*, Owner>("GetZoomData", SCRIPT_NAME, PapyrusAmmoTweaks::GetZoomData, vm));
-	vm->RegisterFunction(
-		new NativeFunction2 <StaticFunctionTag, void, Owner, TESForm*>("SetZoomData", SCRIPT_NAME, PapyrusAmmoTweaks::SetZoomData, vm));
 	
 	// Variable Log Functions
 	vm->RegisterFunction(
 		new NativeFunction1 <StaticFunctionTag, void, Owner>("LogAimModelVars", SCRIPT_NAME, PapyrusAmmoTweaks::LogAimModelVars, vm));
-	vm->RegisterFunction(
-		new NativeFunction1 <StaticFunctionTag, void, Owner>("LogZoomDataVars", SCRIPT_NAME, PapyrusAmmoTweaks::LogZoomDataVars, vm));
-
+	
 	// AimModel - Cone of Fire
 	vm->RegisterFunction(
 		new NativeFunction1 <StaticFunctionTag, float, Owner>("GetConeOfFire_MaxAngle", SCRIPT_NAME, PapyrusAmmoTweaks::GetConeOfFire_MaxAngle, vm));
@@ -886,28 +747,6 @@ void PapyrusAmmoTweaks::RegisterFuncs(VirtualMachine* vm) {
 		new NativeFunction2 <StaticFunctionTag, void, Owner, float>("ModRecoil_Percent", SCRIPT_NAME, PapyrusAmmoTweaks::ModRecoil_Percent, vm));
 	vm->RegisterFunction(
 		new NativeFunction2 <StaticFunctionTag, void, Owner, float>("ModAccuracy_Percent", SCRIPT_NAME, PapyrusAmmoTweaks::ModAccuracy_Percent, vm));
-
-	// ZoomData
-	vm->RegisterFunction(
-		new NativeFunction1 <StaticFunctionTag, float, Owner>("GetZoomData_FoVMult", SCRIPT_NAME, PapyrusAmmoTweaks::GetZoomData_FoVMult, vm));
-	vm->RegisterFunction(
-		new NativeFunction2 <StaticFunctionTag, void, Owner, float>("SetZoomData_FoVMult", SCRIPT_NAME, PapyrusAmmoTweaks::SetZoomData_FoVMult, vm));
-	vm->RegisterFunction(
-		new NativeFunction1 <StaticFunctionTag, UInt32, Owner>("GetZoomData_OverlayIndex", SCRIPT_NAME, PapyrusAmmoTweaks::GetZoomData_OverlayIndex, vm));
-	vm->RegisterFunction(
-		new NativeFunction2 <StaticFunctionTag, void, Owner, UInt32>("SetZoomData_OverlayIndex", SCRIPT_NAME, PapyrusAmmoTweaks::SetZoomData_OverlayIndex, vm));
-	vm->RegisterFunction(
-		new NativeFunction1 <StaticFunctionTag, TESForm*, Owner>("GetZoomData_ImageSpaceMod", SCRIPT_NAME, PapyrusAmmoTweaks::GetZoomData_ImageSpaceMod, vm));
-	vm->RegisterFunction(
-		new NativeFunction2 <StaticFunctionTag, void, Owner, TESForm*>("SetZoomData_ImageSpaceMod", SCRIPT_NAME, PapyrusAmmoTweaks::SetZoomData_ImageSpaceMod, vm));
-	vm->RegisterFunction(
-		new NativeFunction1 <StaticFunctionTag, float, Owner>("GetZoomData_CamOffset_X", SCRIPT_NAME, PapyrusAmmoTweaks::GetZoomData_CamOffset_X, vm));
-	vm->RegisterFunction(
-		new NativeFunction1 <StaticFunctionTag, float, Owner>("GetZoomData_CamOffset_Y", SCRIPT_NAME, PapyrusAmmoTweaks::GetZoomData_CamOffset_Y, vm));
-	vm->RegisterFunction(
-		new NativeFunction1 <StaticFunctionTag, float, Owner>("GetZoomData_CamOffset_Z", SCRIPT_NAME, PapyrusAmmoTweaks::GetZoomData_CamOffset_Z, vm));
-	vm->RegisterFunction(
-		new NativeFunction4 <StaticFunctionTag, void, Owner, float, float, float>("SetZoomData_CamOffset", SCRIPT_NAME, PapyrusAmmoTweaks::SetZoomData_CamOffset, vm));
 
 	// Weapon update
 	vm->RegisterFunction(

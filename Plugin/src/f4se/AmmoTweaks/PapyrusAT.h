@@ -9,7 +9,6 @@ class VirtualMachine;
 // this is probably not a clean way to do it, but seems to work so far...
 // - allows BGSAimModel, BGSImpactDataSet, and BGSZoomData to be passed as forms
 // - variable source: hex dump
-// - no idea what to do about offset/size checks - the first one works, I guess
 
 
 class BGSAimModel : public TESForm
@@ -19,7 +18,8 @@ public:
 
 	// DNAM - Data							byte offsets, hopefully
 	// cof = cone of fire, rec = recoil
-	float			fCoF_MinAngle;			//20 - start at 20 since TESForm ends here
+
+	float			fCoF_MinAngle;			//20
 	float			fCoF_MaxAngle;			//24
 	float			fCoF_IncrPerShot;		//28
 	float			fCoF_DecrPerSec;		//2C
@@ -34,24 +34,11 @@ public:
 	float			fRec_ArcMaxDegrees;		//50
 	float			fRec_ArcRotate;			//54
 	float			fCoF_IronSightsMult;	//58
-	float			fBaseStability;		//5C - total = 96
+	float			fBaseStability;			//5C
 };
-STATIC_ASSERT(sizeof(BGSAimModel) == 0x60);
+STATIC_ASSERT(sizeof(BGSAimModel) == 0x60); // - total = 96
 
 
-class BGSZoomData : public TESForm
-{
-public:
-	enum { kTypeID = kFormType_ZOOM };
-
-	// GNAM - Data
-	float					fovMultiplier;	//20
-	UInt32					overlayIndex;	//24
-	TESImageSpaceModifier *	imageSpaceMod;	//28
-	float					camOffset_X;	//30
-	float					camOffset_Y;	//34
-	float					camOffset_Z;	//38 - total = 3C?
-};
 
 // this seems to be all that's needed for these to work
 // - need to define variables at some point
@@ -60,13 +47,6 @@ class BGSImpactDataSet : public TESForm
 public:
 	enum { kTypeID = kFormType_IPDS };
 };
-
-class TESImageSpaceModifier : public TESForm
-{
-public:
-	enum { kTypeID = kFormType_IMAD };
-};
-
 
 
 namespace PapyrusAmmoTweaks

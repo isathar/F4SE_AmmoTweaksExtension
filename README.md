@@ -2,7 +2,7 @@ F4SE AmmoTweaks Extension
 =========================
 
 
-WIP plugin and script source files adding the ability to influence Fallout 4 weapons' AimModels, ImpactDataSets and ZoomData via Papyrus scripting.
+WIP plugin and script source files adding the ability to influence Fallout 4 weapons' AimModels and ImpactDataSets via Papyrus scripting.
 
 
 ------------------------------------------------------------------------------------------------------- 
