@@ -36,12 +36,14 @@ Struct WeaponStats
 	Form 	AmmoItem = 			none
 	Form	ProjOverride = 		none
 	Form	ImpactDataForm = 	none
+	Form	ZoomDataForm = 		none
 	Form	NPCAmmoList = 		none
 	
 	float 	fDamage = 			1.0
 	float 	fCritDmgMult =		1.0
 	float 	fCritChanceMult =	1.0
 	float 	fProjectileCount = 	1.0
+	int 	iProjOffset = 		0x200
 	
 	float 	fMaxRange = 		256.0
 	float 	fMinRange = 		64.0
@@ -57,6 +59,7 @@ Struct WeaponStatsMod
 	Form 	AmmoItem = 			none
 	Form	ProjOverride = 		none
 	Form	ImpactDataForm = 	none
+	Form	ZoomDataForm = 		none
 	Form	NPCAmmoList = 		none
 	
 	float 	fDamageMult = 		1.0
@@ -92,6 +95,15 @@ Form Function GetImpactDataSet(InstanceData:Owner akOwner) native global
 ; sets the instance's ImpactDataSet
 ; - takes effect immediately
 Function SetImpactDataSet(InstanceData:Owner akOwner, Form newImpactData) native global
+
+
+;****************************  ZoomData  **********************************
+
+; returns the instance's ZoomData
+Form Function GetZoomData(InstanceData:Owner akOwner) native global
+
+; sets the instance's ZoomData
+Function SetZoomData(InstanceData:Owner akOwner, Form newZoomData) native global
 
 
 ;****************************   AimModel   **********************************
@@ -171,7 +183,7 @@ Function SetRecoil_DimSpringForce(InstanceData:Owner akOwner, float fNewVal) nat
 float Function GetRecoil_DimSightsMult(InstanceData:Owner akOwner) native global
 Function SetRecoil_DimSightsMult(InstanceData:Owner akOwner, float fNewVal) native global
 
-; 		- Runaway Shots (?)
+; 		- Runaway Shots
 int Function GetRecoil_RunawayShots(InstanceData:Owner akOwner) native global
 Function SetRecoil_RunawayShots(InstanceData:Owner akOwner, int iNewVal) native global
 

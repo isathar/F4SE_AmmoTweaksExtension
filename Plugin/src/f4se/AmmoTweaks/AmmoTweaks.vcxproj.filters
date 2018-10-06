@@ -78,7 +78,10 @@
     <ClInclude Include="..\f4se\PapyrusVM.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PapyrusAT.h">
+    <ClInclude Include="GameFormComponentsAT.h">
+      <Filter>Plugin Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PapyrusATInstanceData.h">
       <Filter>Plugin Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -143,7 +146,7 @@
     <ClCompile Include="main.cpp">
       <Filter>Plugin Files</Filter>
     </ClCompile>
-    <ClCompile Include="PapyrusAT.cpp">
+    <ClCompile Include="PapyrusATInstanceData.cpp">
       <Filter>Plugin Files</Filter>
     </ClCompile>
   </ItemGroup>

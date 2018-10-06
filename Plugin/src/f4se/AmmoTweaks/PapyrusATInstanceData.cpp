@@ -8,14 +8,13 @@
 #include "../f4se/PapyrusInstanceData.h"
 
 #include "Config.h"
-#include "PapyrusAT.h"
+#include "GameFormComponentsAT.h"
+#include "PapyrusATInstanceData.h"
 
 
-#define SCRIPT_NAME "AmmoTweaks:ATInstanceData"
 
 
-
-bool PapyrusAmmoTweaks::RegisterPapyrus(VirtualMachine * vm)
+bool PapyrusATInstanceData::RegisterPapyrus(VirtualMachine * vm)
 {
 	RegisterFuncs(vm);
 	_MESSAGE("Registered Papyrus native functions.");
@@ -23,7 +22,10 @@ bool PapyrusAmmoTweaks::RegisterPapyrus(VirtualMachine * vm)
 }
 
 
-namespace PapyrusAmmoTweaks {
+namespace PapyrusATInstanceData {
+	#define ATInstanceData_SCRIPT "AmmoTweaks:ATInstanceData"
+	#define ATWeaponRef_SCRIPT "AmmoTweaks:Items:ATWeaponRef"
+
 	DECLARE_STRUCT(Owner, "InstanceData");
 	DECLARE_STRUCT(WeaponStats, "AmmoTweaks:ATInstanceData");
 	DECLARE_STRUCT(WeaponStatsMod, "AmmoTweaks:ATInstanceData");
@@ -120,11 +122,8 @@ namespace PapyrusAmmoTweaks {
 
 
 	//*******************************************************************************
-
-	//*******************************************************************************
-	// Exported functions:
-
-	// papyrus-side version check
+	// papyrus-side version check:
+	
 	UInt32 GetVersionCode(StaticFunctionTag* base) {
 		return PLUGIN_VERSION;
 	}
@@ -136,10 +135,10 @@ namespace PapyrusAmmoTweaks {
 	TESForm* GetImpactDataSet(StaticFunctionTag*, Owner thisInstance)
 	{
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
-		if (instanceData && instanceData->unk58) {
-			if (instanceData->unk58->formID > 0) {
-				_MESSAGE("Current ImpactDataSet: %08X", instanceData->unk58->formID);
-				return instanceData->unk58;
+		if (instanceData) {
+			if (instanceData->unk58) {
+				_MESSAGE("Current ImpactDataSet: %08X", ((TESForm*)instanceData->unk58)->formID);
+				return (TESForm*)instanceData->unk58;
 			}
 		}
 		_MESSAGE("Error: Failed to get ImpactDataSet");
@@ -150,22 +149,23 @@ namespace PapyrusAmmoTweaks {
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
 		BGSImpactDataSet * newImpactData = DYNAMIC_CAST(impactDataForm, TESForm, BGSImpactDataSet);
 		if (instanceData && instanceData->unk58 && newImpactData) {
-			_MESSAGE("New ImpactDataSet: %08X", newImpactData->formID);
+			_MESSAGE("New ImpactDataSet: %08X", impactDataForm->formID);
 			instanceData->unk58 = newImpactData;
 		}
 	}
 
+	
 	//*******************************************************************************
 	// AimModel -
 	TESForm* GetAimModel(StaticFunctionTag*, Owner thisInstance)
 	{
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
-		if (instanceData && instanceData->aimModel) {
-			if (instanceData->aimModel->formID > 0) {
-				_MESSAGE("\nCurrent AimModel: %08X", instanceData->aimModel->formID);
-				return instanceData->aimModel;
+		if (instanceData) {
+			if (instanceData->aimModel) {
+				_MESSAGE("\nCurrent AimModel: %08X", ((TESForm*)instanceData->aimModel)->formID);
+				return (TESForm*)instanceData->aimModel;
 			} else
-				_MESSAGE("\nCurrent AimModel: *edited*", instanceData->aimModel->formID);
+				_MESSAGE("\nCurrent AimModel: *edited*");
 		} else
 			_MESSAGE("Error: Failed to get AimModel");
 		return nullptr;
@@ -175,7 +175,7 @@ namespace PapyrusAmmoTweaks {
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
 		BGSAimModel * newAimModel = DYNAMIC_CAST(aimModelForm, TESForm, BGSAimModel);
 		if (instanceData && newAimModel) {
-			_MESSAGE("New AimModel: %08X", newAimModel->formID);
+			_MESSAGE("New AimModel: %08X", aimModelForm->formID);
 			instanceData->aimModel = newAimModel;
 		}
 		else
@@ -188,15 +188,26 @@ namespace PapyrusAmmoTweaks {
 			if (instanceData->aimModel->formID > 0)
 				_MESSAGE("\nAimModel: %08X - \n Cone of Fire -", instanceData->aimModel->formID);
 			else
-				_MESSAGE("\nAimModel: *edited* - \n Cone of Fire -", instanceData->aimModel->formID);
-			_MESSAGE("    Angle:                  %f - %f", instanceData->aimModel->fCoF_MinAngle, instanceData->aimModel->fCoF_MaxAngle);
-			_MESSAGE("    Increase per Shot:      %f \n    Decrease per Second:    %f \n    Decrease Delay ms:      %i", instanceData->aimModel->fCoF_IncrPerShot, instanceData->aimModel->fCoF_DecrPerSec, instanceData->aimModel->iCoF_DecrDelayMS);
-			_MESSAGE("    Sneak Multiplier:       %f \n    Iron Sights Multiplier: %f", instanceData->aimModel->fCoF_SneakMult, instanceData->aimModel->fCoF_IronSightsMult);
-			_MESSAGE(" Recoil - \n    Amount per Shot:        %f - %f", instanceData->aimModel->fRec_MinPerShot, instanceData->aimModel->fRec_MaxPerShot);
-			_MESSAGE("    Arc:                    %f \n    Arc Rotate:             %f", instanceData->aimModel->fRec_ArcMaxDegrees, instanceData->aimModel->fRec_ArcRotate);
-			_MESSAGE("    Diminish Spring Force:  %f \n    Diminish Sights:        %f", instanceData->aimModel->fRec_DimSpringForce, instanceData->aimModel->fRec_DimSightsMult);
-			_MESSAGE("    Hip Multiplier:         %f \n    Base Stability:         %f", instanceData->aimModel->fRec_HipMult, instanceData->aimModel->fBaseStability);
-			_MESSAGE("    Shots/Runaway:          %i", instanceData->aimModel->iRec_RunawayShots);
+				_MESSAGE("\nAimModel: *edited* - \n Cone of Fire -");
+
+			_MESSAGE("    Angle:                  %f - %f", instanceData->aimModel->CoF_MinAngle, instanceData->aimModel->CoF_MaxAngle);
+			_MESSAGE("    Increase per Shot:      %f \n    Decrease per Second:    %f \n    Decrease Delay ms:      %i", instanceData->aimModel->CoF_IncrPerShot, instanceData->aimModel->CoF_DecrPerSec, instanceData->aimModel->CoF_DecrDelayMS);
+			_MESSAGE("    Sneak Multiplier:       %f \n    Iron Sights Multiplier: %f", instanceData->aimModel->CoF_SneakMult, instanceData->aimModel->CoF_IronSightsMult);
+		
+			_MESSAGE(" Recoil - \n    Diminish Spring Force:  %f \n    Diminish Sights:        %f", instanceData->aimModel->Rec_DimSpringForce, instanceData->aimModel->Rec_DimSightsMult);
+
+			_MESSAGE("    Amount per Shot:        %f - %f", instanceData->aimModel->Rec_MinPerShot, instanceData->aimModel->Rec_MaxPerShot);
+			
+			_MESSAGE("    Arc:                    %f \n    Arc Rotate:             %f", instanceData->aimModel->Rec_ArcMaxDegrees, instanceData->aimModel->Rec_ArcRotate);
+			_MESSAGE("    Hip Multiplier:         %f \n    Base Stability:         %f", instanceData->aimModel->Rec_HipMult, instanceData->aimModel->BaseStability);
+			_MESSAGE("    Shots/Runaway:          %i", instanceData->aimModel->Rec_RunawayShots);
+			
+			_MESSAGE(
+				"    Unknowns: \n          %08X \n          %08X \n          %08X \n\n          %08X \n          %08X", 
+				instanceData->aimModel->unk00, instanceData->aimModel->unk04, instanceData->aimModel->unk08, instanceData->aimModel->unk10, instanceData->aimModel->unk14
+			);
+
+
 		}
 		else
 			_MESSAGE("No instance or AimModel");
@@ -210,7 +221,7 @@ namespace PapyrusAmmoTweaks {
 	{
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
 		if (instanceData && instanceData->aimModel) {
-			return instanceData->aimModel->fCoF_MaxAngle;
+			return instanceData->aimModel->CoF_MaxAngle;
 		}
 		return 0.0;
 	}
@@ -218,7 +229,7 @@ namespace PapyrusAmmoTweaks {
 	{
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
 		if (instanceData && instanceData->aimModel) {
-			instanceData->aimModel->fCoF_MaxAngle = max(0.0, fNewVal);
+			instanceData->aimModel->CoF_MaxAngle = max(0.0, fNewVal);
 		}
 	}
 
@@ -227,7 +238,7 @@ namespace PapyrusAmmoTweaks {
 	{
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
 		if (instanceData && instanceData->aimModel) {
-			return instanceData->aimModel->fCoF_MinAngle;
+			return instanceData->aimModel->CoF_MinAngle;
 		}
 		return 0.0;
 	}
@@ -235,7 +246,7 @@ namespace PapyrusAmmoTweaks {
 	{
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
 		if (instanceData && instanceData->aimModel) {
-			instanceData->aimModel->fCoF_MinAngle = max(0.0, fNewVal);
+			instanceData->aimModel->CoF_MinAngle = max(0.0, fNewVal);
 		}
 	}
 
@@ -244,7 +255,7 @@ namespace PapyrusAmmoTweaks {
 	{
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
 		if (instanceData && instanceData->aimModel) {
-			return instanceData->aimModel->fCoF_IncrPerShot;
+			return instanceData->aimModel->CoF_IncrPerShot;
 		}
 		return 0.0;
 	}
@@ -252,7 +263,7 @@ namespace PapyrusAmmoTweaks {
 	{
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
 		if (instanceData && instanceData->aimModel) {
-			instanceData->aimModel->fCoF_IncrPerShot = max(0.0, fNewVal);
+			instanceData->aimModel->CoF_IncrPerShot = max(0.0, fNewVal);
 		}
 	}
 
@@ -261,7 +272,7 @@ namespace PapyrusAmmoTweaks {
 	{
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
 		if (instanceData && instanceData->aimModel) {
-			return instanceData->aimModel->fCoF_DecrPerSec;
+			return instanceData->aimModel->CoF_DecrPerSec;
 		}
 		return 0.0;
 	}
@@ -269,7 +280,7 @@ namespace PapyrusAmmoTweaks {
 	{
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
 		if (instanceData && instanceData->aimModel) {
-			instanceData->aimModel->fCoF_DecrPerSec = max(0.0, fNewVal);
+			instanceData->aimModel->CoF_DecrPerSec = max(0.0, fNewVal);
 		}
 	}
 
@@ -278,7 +289,7 @@ namespace PapyrusAmmoTweaks {
 	{
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
 		if (instanceData && instanceData->aimModel) {
-			return instanceData->aimModel->iCoF_DecrDelayMS;
+			return instanceData->aimModel->CoF_DecrDelayMS;
 		}
 		return 0;
 	}
@@ -286,7 +297,7 @@ namespace PapyrusAmmoTweaks {
 	{
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
 		if (instanceData && instanceData->aimModel) {
-			instanceData->aimModel->iCoF_DecrDelayMS = max(0, iNewVal);
+			instanceData->aimModel->CoF_DecrDelayMS = max(0, iNewVal);
 		}
 	}
 
@@ -295,7 +306,7 @@ namespace PapyrusAmmoTweaks {
 	{
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
 		if (instanceData && instanceData->aimModel) {
-			return instanceData->aimModel->fCoF_SneakMult;
+			return instanceData->aimModel->CoF_SneakMult;
 		}
 		return 0.0;
 	}
@@ -303,7 +314,7 @@ namespace PapyrusAmmoTweaks {
 	{
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
 		if (instanceData && instanceData->aimModel) {
-			instanceData->aimModel->fCoF_SneakMult = max(0.0, fNewVal);
+			instanceData->aimModel->CoF_SneakMult = max(0.0, fNewVal);
 		}
 	}
 
@@ -312,7 +323,7 @@ namespace PapyrusAmmoTweaks {
 	{
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
 		if (instanceData && instanceData->aimModel) {
-			return instanceData->aimModel->fCoF_IronSightsMult;
+			return instanceData->aimModel->CoF_IronSightsMult;
 		}
 		return 0.0;
 	}
@@ -320,7 +331,7 @@ namespace PapyrusAmmoTweaks {
 	{
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
 		if (instanceData && instanceData->aimModel) {
-			instanceData->aimModel->fCoF_IronSightsMult = max(0.0, fNewVal);
+			instanceData->aimModel->CoF_IronSightsMult = max(0.0, fNewVal);
 		}
 	}
 
@@ -332,7 +343,7 @@ namespace PapyrusAmmoTweaks {
 	{
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
 		if (instanceData && instanceData->aimModel) {
-			return instanceData->aimModel->fRec_MaxPerShot;
+			return instanceData->aimModel->Rec_MaxPerShot;
 		}
 		return 0.0;
 	}
@@ -340,7 +351,7 @@ namespace PapyrusAmmoTweaks {
 	{
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
 		if (instanceData && instanceData->aimModel)
-			instanceData->aimModel->fRec_MaxPerShot = max(0.0, fNewVal);
+			instanceData->aimModel->Rec_MaxPerShot = max(0.0, fNewVal);
 	}
 
 	//           - Min per Shot
@@ -348,7 +359,7 @@ namespace PapyrusAmmoTweaks {
 	{
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
 		if (instanceData && instanceData->aimModel) {
-			return instanceData->aimModel->fRec_MinPerShot;
+			return instanceData->aimModel->Rec_MinPerShot;
 		}
 		return 0.0;
 	}
@@ -356,7 +367,7 @@ namespace PapyrusAmmoTweaks {
 	{
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
 		if (instanceData && instanceData->aimModel)
-			instanceData->aimModel->fRec_MinPerShot = max(0.0, fNewVal);
+			instanceData->aimModel->Rec_MinPerShot = max(0.0, fNewVal);
 	}
 
 	//           - Arc Max Degrees
@@ -364,7 +375,7 @@ namespace PapyrusAmmoTweaks {
 	{
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
 		if (instanceData && instanceData->aimModel) {
-			return instanceData->aimModel->fRec_ArcMaxDegrees;
+			return instanceData->aimModel->Rec_ArcMaxDegrees;
 		}
 		return 0.0;
 	}
@@ -372,7 +383,7 @@ namespace PapyrusAmmoTweaks {
 	{
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
 		if (instanceData && instanceData->aimModel)
-			instanceData->aimModel->fRec_ArcMaxDegrees = max(0.0, fNewVal);
+			instanceData->aimModel->Rec_ArcMaxDegrees = max(0.0, fNewVal);
 	}
 
 	//           - Arc Rotate
@@ -380,7 +391,7 @@ namespace PapyrusAmmoTweaks {
 	{
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
 		if (instanceData && instanceData->aimModel) {
-			return instanceData->aimModel->fRec_ArcRotate;
+			return instanceData->aimModel->Rec_ArcRotate;
 		}
 		return 0.0;
 	}
@@ -388,7 +399,7 @@ namespace PapyrusAmmoTweaks {
 	{
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
 		if (instanceData && instanceData->aimModel)
-			instanceData->aimModel->fRec_ArcRotate = max(0.0, fNewVal);
+			instanceData->aimModel->Rec_ArcRotate = max(0.0, fNewVal);
 	}
 
 	//           - Base Stability
@@ -396,7 +407,7 @@ namespace PapyrusAmmoTweaks {
 	{
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
 		if (instanceData && instanceData->aimModel) {
-			return instanceData->aimModel->fBaseStability;
+			return instanceData->aimModel->BaseStability;
 		}
 		return 0.0;
 	}
@@ -404,7 +415,7 @@ namespace PapyrusAmmoTweaks {
 	{
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
 		if (instanceData && instanceData->aimModel)
-			instanceData->aimModel->fBaseStability = max(0.0, fNewVal);
+			instanceData->aimModel->BaseStability = max(0.0, fNewVal);
 	}
 
 	//           - Hip-fire Multiplier
@@ -412,7 +423,7 @@ namespace PapyrusAmmoTweaks {
 	{
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
 		if (instanceData && instanceData->aimModel) {
-			return instanceData->aimModel->fRec_HipMult;
+			return instanceData->aimModel->Rec_HipMult;
 		}
 		return 0.0;
 	}
@@ -420,7 +431,7 @@ namespace PapyrusAmmoTweaks {
 	{
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
 		if (instanceData && instanceData->aimModel)
-			instanceData->aimModel->fRec_HipMult = max(0.0, fNewVal);
+			instanceData->aimModel->Rec_HipMult = max(0.0, fNewVal);
 	}
 
 	//           - Diminish Spring Force
@@ -428,7 +439,7 @@ namespace PapyrusAmmoTweaks {
 	{
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
 		if (instanceData && instanceData->aimModel) {
-			return instanceData->aimModel->fRec_DimSpringForce;
+			return instanceData->aimModel->Rec_DimSpringForce;
 		}
 		return 0.0;
 	}
@@ -436,7 +447,7 @@ namespace PapyrusAmmoTweaks {
 	{
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
 		if (instanceData && instanceData->aimModel)
-			instanceData->aimModel->fRec_DimSpringForce = max(0.0, fNewVal);
+			instanceData->aimModel->Rec_DimSpringForce = max(0.0, fNewVal);
 	}
 
 	//           - Diminish Sights Multiplier
@@ -444,7 +455,7 @@ namespace PapyrusAmmoTweaks {
 	{
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
 		if (instanceData && instanceData->aimModel) {
-			return instanceData->aimModel->fRec_DimSightsMult;
+			return instanceData->aimModel->Rec_DimSightsMult;
 		}
 		return 0.0;
 	}
@@ -452,7 +463,7 @@ namespace PapyrusAmmoTweaks {
 	{
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
 		if (instanceData && instanceData->aimModel)
-			instanceData->aimModel->fRec_DimSightsMult = max(0.0, fNewVal);
+			instanceData->aimModel->Rec_DimSightsMult = max(0.0, fNewVal);
 	}
 
 	//           - Runaway Shots
@@ -460,7 +471,7 @@ namespace PapyrusAmmoTweaks {
 	{
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
 		if (instanceData && instanceData->aimModel) {
-			return instanceData->aimModel->iRec_RunawayShots;
+			return instanceData->aimModel->Rec_RunawayShots;
 		}
 		return 0;
 	}
@@ -468,7 +479,7 @@ namespace PapyrusAmmoTweaks {
 	{
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
 		if (instanceData && instanceData->aimModel)
-			instanceData->aimModel->iRec_RunawayShots = max(0, iNewVal);
+			instanceData->aimModel->Rec_RunawayShots = max(0, iNewVal);
 	}
 
 
@@ -482,12 +493,12 @@ namespace PapyrusAmmoTweaks {
 		if (instanceData && instanceData->aimModel)
 		{
 			BGSAimModel* aimModel = instanceData->aimModel;
-			float fRecoilMin = aimModel->fRec_MinPerShot;
-			float fRecoilMax = aimModel->fRec_MaxPerShot;
-			float fHipMult = aimModel->fRec_HipMult;
-			aimModel->fRec_MinPerShot = max(0.0, fRecoilMin + (fRecoilMin * fPercent));
-			aimModel->fRec_MaxPerShot = max(0.0, fRecoilMax + (fRecoilMax * fPercent));
-			aimModel->fRec_HipMult = max(0.0, fHipMult + (fHipMult * fPercent));
+			float fRecoilMin = aimModel->Rec_MinPerShot;
+			float fRecoilMax = aimModel->Rec_MaxPerShot;
+			float fHipMult = aimModel->Rec_HipMult;
+			aimModel->Rec_MinPerShot = max(0.0, fRecoilMin + (fRecoilMin * fPercent));
+			aimModel->Rec_MaxPerShot = max(0.0, fRecoilMax + (fRecoilMax * fPercent));
+			aimModel->Rec_HipMult = max(0.0, fHipMult + (fHipMult * fPercent));
 		}
 	}
 
@@ -498,10 +509,36 @@ namespace PapyrusAmmoTweaks {
 		if (instanceData && instanceData->aimModel)
 		{
 			BGSAimModel* aimModel = instanceData->aimModel;
-			float fCoFMin = instanceData->aimModel->fCoF_MinAngle;
-			float fCoFMax = instanceData->aimModel->fCoF_MaxAngle;
-			aimModel->fCoF_MinAngle = max(0.0, fCoFMin + (fCoFMin * fPercent));
-			aimModel->fCoF_MaxAngle = max(0.0, fCoFMax + (fCoFMax * fPercent));
+			float fCoFMin = instanceData->aimModel->CoF_MinAngle;
+			float fCoFMax = instanceData->aimModel->CoF_MaxAngle;
+			aimModel->CoF_MinAngle = max(0.0, fCoFMin + (fCoFMin * fPercent));
+			aimModel->CoF_MaxAngle = max(0.0, fCoFMax + (fCoFMax * fPercent));
+		}
+	}
+
+
+	//*******************************************************************************
+	// ZoomData:
+
+	TESForm* GetZoomData(StaticFunctionTag*, Owner thisInstance)
+	{
+		auto instanceData = GetWeaponInstanceData(&thisInstance);
+		if (instanceData) {
+			if (instanceData->zoomData) {
+				_MESSAGE("Current ZoomData: %08X", ((TESForm*)instanceData->zoomData)->formID);
+				return (TESForm*)instanceData->zoomData;
+			}
+		}
+		_MESSAGE("Error: Failed to get ZoomData");
+		return nullptr;
+	}
+	void SetZoomData(StaticFunctionTag*, Owner thisInstance, TESForm* zoomDataForm)
+	{
+		auto instanceData = GetWeaponInstanceData(&thisInstance);
+		BGSZoomData * newZoomData = DYNAMIC_CAST(zoomDataForm, TESForm, BGSZoomData);
+		if (instanceData && instanceData->zoomData && newZoomData) {
+			_MESSAGE("New ImpactDataSet: %08X", zoomDataForm->formID);
+			instanceData->zoomData = newZoomData;
 		}
 	}
 
@@ -511,23 +548,36 @@ namespace PapyrusAmmoTweaks {
 	void LogWeaponStats_Gun(StaticFunctionTag*, Owner thisInstance)
 	{
 		auto instanceData = GetWeaponInstanceData(&thisInstance);
+		TESForm* weapForm = nullptr;
+		
 		if (instanceData) {
-			_MESSAGE("\nCurrent Stats:");
-			_MESSAGE("    Damage            : %i", instanceData->baseDamage);
-			_MESSAGE("    Range             : %.2f - %.2f", instanceData->minRange, instanceData->maxRange);
-			_MESSAGE("    Crit Dmg Mult     : %.2f", instanceData->critDamageMult);
-			_MESSAGE("    Crit Chance Mult  : %.2f", instanceData->critChargeBonus);
+			_MESSAGE("\n Current Weapon:");
+
+			if (instanceData->ammo)
+				_MESSAGE("    Ammo                : %s", instanceData->ammo->GetFullName());
+			
+			_MESSAGE("    Damage              : %i", instanceData->baseDamage);
+			_MESSAGE("    Range               : %.2f - %.2f", instanceData->minRange, instanceData->maxRange);
+			_MESSAGE("    Crit Dmg Mult       : %.2f", instanceData->critDamageMult);
+			_MESSAGE("    Crit Chance Mult    : %.2f", instanceData->critChargeBonus);
 
 			if (instanceData->firingData) {
-				if (instanceData->firingData->numProjectiles > 0x200)
-					_MESSAGE("    Projectiles       : %i", instanceData->firingData->numProjectiles - 0x200);
+				if (instanceData->firingData->projectileOverride)
+					_MESSAGE("    Projectile          : %08X", instanceData->firingData->projectileOverride->formID);
 				else
-					_MESSAGE("    Projectiles       : %i", instanceData->firingData->numProjectiles);
-			}
+					_MESSAGE("    Projectile          : default");
 
+				if (instanceData->firingData->numProjectiles > 0x200)
+					_MESSAGE("    Num Projectiles     : %i (+0x200)", instanceData->firingData->numProjectiles - 0x200);
+				else if (instanceData->firingData->numProjectiles > 0x100)
+					_MESSAGE("    Num Projectiles     : %i (+0x100)", instanceData->firingData->numProjectiles - 0x100);
+				else
+					_MESSAGE("    Num Projectiles     : %i", instanceData->firingData->numProjectiles);
+				
+			}
 			if (instanceData->aimModel) {
-				_MESSAGE("    Recoil per Shot   : %.2f - %.2f", instanceData->aimModel->fRec_MinPerShot, instanceData->aimModel->fRec_MaxPerShot);
-				_MESSAGE("    Cone of Fire Angle: %.2f - %.2f", instanceData->aimModel->fCoF_MinAngle, instanceData->aimModel->fCoF_MaxAngle);
+				_MESSAGE("    Recoil per Shot     : %.2f - %.2f", instanceData->aimModel->Rec_MinPerShot, instanceData->aimModel->Rec_MaxPerShot);
+				_MESSAGE("    Cone of Fire min/max: %.2f - %.2f", instanceData->aimModel->CoF_MinAngle, instanceData->aimModel->CoF_MaxAngle);
 			}
 		}
 	}
@@ -544,17 +594,30 @@ namespace PapyrusAmmoTweaks {
 			statsBase.Set("fMinRange", instanceData->minRange);
 
 			statsBase.Set("ImpactDataForm", (TESForm*)(instanceData->unk58));
+			statsBase.Set("ZoomDataForm", (TESForm*)(instanceData->zoomData));
 
 			if (instanceData->firingData) {
 				statsBase.Set("ProjOverride", instanceData->firingData->projectileOverride);
-				statsBase.Set("fProjectileCount", (float)instanceData->firingData->numProjectiles);
+				// hackish - needed for now since numProjectiles has extra bytes
+				if (instanceData->firingData->numProjectiles > 0x200) {
+					statsBase.Set("iProjOffset", (UInt32)0x200);
+					statsBase.Set("fProjectileCount", (float)(instanceData->firingData->numProjectiles - 0x200));
+				}
+				else if (instanceData->firingData->numProjectiles > 0x100) {
+					statsBase.Set("iProjOffset", (UInt32)0x100);
+					statsBase.Set("fProjectileCount", (float)(instanceData->firingData->numProjectiles - 0x100));
+				}
+				else {
+					statsBase.Set("iProjOffset", (UInt32)0);
+					statsBase.Set("fProjectileCount", (float)instanceData->firingData->numProjectiles);
+				}
 			}
 
 			if (instanceData->aimModel) {
-				statsBase.Set("fRecoilMax", instanceData->aimModel->fRec_MaxPerShot);
-				statsBase.Set("fRecoilMin", instanceData->aimModel->fRec_MinPerShot);
-				statsBase.Set("fCoFMax", instanceData->aimModel->fCoF_MaxAngle);
-				statsBase.Set("fCoFMin", instanceData->aimModel->fCoF_MinAngle);
+				statsBase.Set("fRecoilMax", instanceData->aimModel->Rec_MaxPerShot);
+				statsBase.Set("fRecoilMin", instanceData->aimModel->Rec_MinPerShot);
+				statsBase.Set("fCoFMax", instanceData->aimModel->CoF_MaxAngle);
+				statsBase.Set("fCoFMin", instanceData->aimModel->CoF_MinAngle);
 			}
 		}
 
@@ -569,11 +632,15 @@ namespace PapyrusAmmoTweaks {
 			TESLevItem* ammoList = nullptr;
 			BGSProjectile* projectileOverride = nullptr;
 			TESForm* impactDataForm = nullptr;
+			TESForm* zoomDataForm = nullptr;
+
 			BGSImpactDataSet* finalImpactData = nullptr;
+			BGSZoomData* finalZoomData = nullptr;
 			
 			float fProjectileCount, fProjectileMult, fDamage, fDamageMult, fCritDamage, fCritChance, fCritDamageMult, fCritChanceMult = 1.0;
 			float fRangeMult, fRecoilMin, fRecoilMax, fRecoilMult, fCoFMax, fCoFMin, fCofMult = 1.0;
 			float fMinRange, fMaxRange = 256.0;
+			UInt32 iProjOffset = 0x0;
 
 			// ammo
 			if (statsUpdate.Get("AmmoItem", &ammoItem)) {
@@ -595,8 +662,9 @@ namespace PapyrusAmmoTweaks {
 						instanceData->firingData->projectileOverride = projectileOverride;
 				}
 				// projectile count
-				if (statsUpdate.Get("fProjectileMult", &fProjectileMult) && statsBase.Get("fProjectileCount", &fProjectileCount))
-					instanceData->firingData->numProjectiles = max(1, min((UInt32)floor(fProjectileCount * fProjectileMult), 0xFFFF));
+				if (statsUpdate.Get("fProjectileMult", &fProjectileMult) && statsBase.Get("fProjectileCount", &fProjectileCount) && statsBase.Get("iProjOffset", &iProjOffset))
+					instanceData->firingData->numProjectiles = iProjOffset + (UInt32)max(0x01, min((int)floor(fProjectileCount * fProjectileMult), 0xFF));
+				
 			}
 
 			// ImpactDataSet
@@ -610,7 +678,7 @@ namespace PapyrusAmmoTweaks {
 
 			// Damage
 			if (statsUpdate.Get("fDamageMult", &fDamageMult) && statsBase.Get("fDamage", &fDamage))
-				instanceData->baseDamage = max(0, min((UInt32)floor(fDamage * fDamageMult), 0xFFFF));
+				instanceData->baseDamage = (UInt32)max(0, min((int)floor(fDamage * fDamageMult), 0xFFFF));
 
 			// Crit Damage
 			if (statsUpdate.Get("fCritDmgMult", &fCritDamageMult) && statsBase.Get("fCritDmgMult", &fCritDamage))
@@ -633,16 +701,25 @@ namespace PapyrusAmmoTweaks {
 				// Recoil
 				if (statsUpdate.Get("fRecoilMult", &fRecoilMult)) {
 					if (statsBase.Get("fRecoilMax", &fRecoilMax))
-						instanceData->aimModel->fRec_MaxPerShot = max(0.0, fRecoilMax * fRecoilMult);
+						instanceData->aimModel->Rec_MaxPerShot = max(0.0, fRecoilMax * fRecoilMult);
 					if (statsBase.Get("fRecoilMin", &fRecoilMin))
-						instanceData->aimModel->fRec_MinPerShot = max(0.0, fRecoilMin * fRecoilMult);
+						instanceData->aimModel->Rec_MinPerShot = max(0.0, fRecoilMin * fRecoilMult);
 				}
 				// Cone of Fire
 				if (statsUpdate.Get("fCofMult", &fCofMult)) {
 					if (statsBase.Get("fCoFMax", &fCoFMax))
-						instanceData->aimModel->fCoF_MaxAngle = max(0.0, fCoFMax * fCofMult);
+						instanceData->aimModel->CoF_MaxAngle = max(0.0, fCoFMax * fCofMult);
 					if (statsBase.Get("fCoFMin", &fCoFMin))
-						instanceData->aimModel->fCoF_MinAngle = max(0.0, fCoFMin * fCofMult);
+						instanceData->aimModel->CoF_MinAngle = max(0.0, fCoFMin * fCofMult);
+				}
+			}
+
+			// ZoomData
+			if (statsUpdate.Get("ZoomDataForm", &zoomDataForm)) {
+				if (zoomDataForm) {
+					finalZoomData = DYNAMIC_CAST(zoomDataForm, TESForm, BGSZoomData);
+					if (finalZoomData)
+						instanceData->zoomData = finalZoomData;
 				}
 			}
 
@@ -655,106 +732,110 @@ namespace PapyrusAmmoTweaks {
 
 
 
-void PapyrusAmmoTweaks::RegisterFuncs(VirtualMachine* vm) {
+void PapyrusATInstanceData::RegisterFuncs(VirtualMachine* vm) {
 	// Get Version
 	vm->RegisterFunction(
-		new NativeFunction0 <StaticFunctionTag, UInt32>("GetVersionCode", SCRIPT_NAME, PapyrusAmmoTweaks::GetVersionCode, vm));
+		new NativeFunction0 <StaticFunctionTag, UInt32>("GetVersionCode", ATInstanceData_SCRIPT, PapyrusATInstanceData::GetVersionCode, vm));
 	
 	// Get/Set Form Functions
 	vm->RegisterFunction(
-		new NativeFunction1 <StaticFunctionTag, TESForm*, Owner>("GetImpactDataSet", SCRIPT_NAME, PapyrusAmmoTweaks::GetImpactDataSet, vm));
+		new NativeFunction1 <StaticFunctionTag, TESForm*, Owner>("GetImpactDataSet", ATInstanceData_SCRIPT, PapyrusATInstanceData::GetImpactDataSet, vm));
 	vm->RegisterFunction(
-		new NativeFunction2 <StaticFunctionTag, void, Owner, TESForm*>("SetImpactDataSet", SCRIPT_NAME, PapyrusAmmoTweaks::SetImpactDataSet, vm));
+		new NativeFunction2 <StaticFunctionTag, void, Owner, TESForm*>("SetImpactDataSet", ATInstanceData_SCRIPT, PapyrusATInstanceData::SetImpactDataSet, vm));
 	vm->RegisterFunction(
-		new NativeFunction1 <StaticFunctionTag, TESForm*, Owner>("GetAimModel", SCRIPT_NAME, PapyrusAmmoTweaks::GetAimModel, vm));
+		new NativeFunction1 <StaticFunctionTag, TESForm*, Owner>("GetAimModel", ATInstanceData_SCRIPT, PapyrusATInstanceData::GetAimModel, vm));
 	vm->RegisterFunction(
-		new NativeFunction2 <StaticFunctionTag, void, Owner, TESForm*>("SetAimModel", SCRIPT_NAME, PapyrusAmmoTweaks::SetAimModel, vm));
+		new NativeFunction2 <StaticFunctionTag, void, Owner, TESForm*>("SetAimModel", ATInstanceData_SCRIPT, PapyrusATInstanceData::SetAimModel, vm));
+	vm->RegisterFunction(
+		new NativeFunction1 <StaticFunctionTag, TESForm*, Owner>("GetZoomData", ATInstanceData_SCRIPT, PapyrusATInstanceData::GetZoomData, vm));
+	vm->RegisterFunction(
+		new NativeFunction2 <StaticFunctionTag, void, Owner, TESForm*>("SetZoomData", ATInstanceData_SCRIPT, PapyrusATInstanceData::SetZoomData, vm));
 	
 	// Variable Log Functions
 	vm->RegisterFunction(
-		new NativeFunction1 <StaticFunctionTag, void, Owner>("LogAimModelVars", SCRIPT_NAME, PapyrusAmmoTweaks::LogAimModelVars, vm));
+		new NativeFunction1 <StaticFunctionTag, void, Owner>("LogAimModelVars", ATInstanceData_SCRIPT, PapyrusATInstanceData::LogAimModelVars, vm));
 	
 	// AimModel - Cone of Fire
 	vm->RegisterFunction(
-		new NativeFunction1 <StaticFunctionTag, float, Owner>("GetConeOfFire_MaxAngle", SCRIPT_NAME, PapyrusAmmoTweaks::GetConeOfFire_MaxAngle, vm));
+		new NativeFunction1 <StaticFunctionTag, float, Owner>("GetConeOfFire_MaxAngle", ATInstanceData_SCRIPT, PapyrusATInstanceData::GetConeOfFire_MaxAngle, vm));
 	vm->RegisterFunction(
-		new NativeFunction2 <StaticFunctionTag, void, Owner, float>("SetConeOfFire_MaxAngle", SCRIPT_NAME, PapyrusAmmoTweaks::SetConeOfFire_MaxAngle, vm));
+		new NativeFunction2 <StaticFunctionTag, void, Owner, float>("SetConeOfFire_MaxAngle", ATInstanceData_SCRIPT, PapyrusATInstanceData::SetConeOfFire_MaxAngle, vm));
 	vm->RegisterFunction(
-		new NativeFunction1 <StaticFunctionTag, float, Owner>("GetConeOfFire_MinAngle", SCRIPT_NAME, PapyrusAmmoTweaks::GetConeOfFire_MinAngle, vm));
+		new NativeFunction1 <StaticFunctionTag, float, Owner>("GetConeOfFire_MinAngle", ATInstanceData_SCRIPT, PapyrusATInstanceData::GetConeOfFire_MinAngle, vm));
 	vm->RegisterFunction(
-		new NativeFunction2 <StaticFunctionTag, void, Owner, float>("SetConeOfFire_MinAngle", SCRIPT_NAME, PapyrusAmmoTweaks::SetConeOfFire_MinAngle, vm));
+		new NativeFunction2 <StaticFunctionTag, void, Owner, float>("SetConeOfFire_MinAngle", ATInstanceData_SCRIPT, PapyrusATInstanceData::SetConeOfFire_MinAngle, vm));
 	vm->RegisterFunction(
-		new NativeFunction1 <StaticFunctionTag, float, Owner>("GetConeOfFire_IncreasePerShot", SCRIPT_NAME, PapyrusAmmoTweaks::GetConeOfFire_IncreasePerShot, vm));
+		new NativeFunction1 <StaticFunctionTag, float, Owner>("GetConeOfFire_IncreasePerShot", ATInstanceData_SCRIPT, PapyrusATInstanceData::GetConeOfFire_IncreasePerShot, vm));
 	vm->RegisterFunction(
-		new NativeFunction2 <StaticFunctionTag, void, Owner, float>("SetConeOfFire_IncreasePerShot", SCRIPT_NAME, PapyrusAmmoTweaks::SetConeOfFire_IncreasePerShot, vm));
+		new NativeFunction2 <StaticFunctionTag, void, Owner, float>("SetConeOfFire_IncreasePerShot", ATInstanceData_SCRIPT, PapyrusATInstanceData::SetConeOfFire_IncreasePerShot, vm));
 	vm->RegisterFunction(
-		new NativeFunction1 <StaticFunctionTag, float, Owner>("GetConeOfFire_DecreasePerSec", SCRIPT_NAME, PapyrusAmmoTweaks::GetConeOfFire_DecreasePerSec, vm));
+		new NativeFunction1 <StaticFunctionTag, float, Owner>("GetConeOfFire_DecreasePerSec", ATInstanceData_SCRIPT, PapyrusATInstanceData::GetConeOfFire_DecreasePerSec, vm));
 	vm->RegisterFunction(
-		new NativeFunction2 <StaticFunctionTag, void, Owner, float>("SetConeOfFire_DecreasePerSec", SCRIPT_NAME, PapyrusAmmoTweaks::SetConeOfFire_DecreasePerSec, vm));
+		new NativeFunction2 <StaticFunctionTag, void, Owner, float>("SetConeOfFire_DecreasePerSec", ATInstanceData_SCRIPT, PapyrusATInstanceData::SetConeOfFire_DecreasePerSec, vm));
 	vm->RegisterFunction(
-		new NativeFunction1 <StaticFunctionTag, UInt32, Owner>("GetConeOfFire_DecreaseDelayms", SCRIPT_NAME, PapyrusAmmoTweaks::GetConeOfFire_DecreaseDelayms, vm));
+		new NativeFunction1 <StaticFunctionTag, UInt32, Owner>("GetConeOfFire_DecreaseDelayms", ATInstanceData_SCRIPT, PapyrusATInstanceData::GetConeOfFire_DecreaseDelayms, vm));
 	vm->RegisterFunction(
-		new NativeFunction2 <StaticFunctionTag, void, Owner, UInt32>("SetConeOfFire_DecreaseDelayms", SCRIPT_NAME, PapyrusAmmoTweaks::SetConeOfFire_DecreaseDelayms, vm));
+		new NativeFunction2 <StaticFunctionTag, void, Owner, UInt32>("SetConeOfFire_DecreaseDelayms", ATInstanceData_SCRIPT, PapyrusATInstanceData::SetConeOfFire_DecreaseDelayms, vm));
 	vm->RegisterFunction(
-		new NativeFunction1 <StaticFunctionTag, float, Owner>("GetConeOfFire_SneakMult", SCRIPT_NAME, PapyrusAmmoTweaks::GetConeOfFire_SneakMult, vm));
+		new NativeFunction1 <StaticFunctionTag, float, Owner>("GetConeOfFire_SneakMult", ATInstanceData_SCRIPT, PapyrusATInstanceData::GetConeOfFire_SneakMult, vm));
 	vm->RegisterFunction(
-		new NativeFunction2 <StaticFunctionTag, void, Owner, float>("SetConeOfFire_SneakMult", SCRIPT_NAME, PapyrusAmmoTweaks::SetConeOfFire_SneakMult, vm));
+		new NativeFunction2 <StaticFunctionTag, void, Owner, float>("SetConeOfFire_SneakMult", ATInstanceData_SCRIPT, PapyrusATInstanceData::SetConeOfFire_SneakMult, vm));
 	vm->RegisterFunction(
-		new NativeFunction1 <StaticFunctionTag, float, Owner>("GetConeOfFire_IronSightsMult", SCRIPT_NAME, PapyrusAmmoTweaks::GetConeOfFire_IronSightsMult, vm));
+		new NativeFunction1 <StaticFunctionTag, float, Owner>("GetConeOfFire_IronSightsMult", ATInstanceData_SCRIPT, PapyrusATInstanceData::GetConeOfFire_IronSightsMult, vm));
 	vm->RegisterFunction(
-		new NativeFunction2 <StaticFunctionTag, void, Owner, float>("SetConeOfFire_IronSightsMult", SCRIPT_NAME, PapyrusAmmoTweaks::SetConeOfFire_IronSightsMult, vm));
+		new NativeFunction2 <StaticFunctionTag, void, Owner, float>("SetConeOfFire_IronSightsMult", ATInstanceData_SCRIPT, PapyrusATInstanceData::SetConeOfFire_IronSightsMult, vm));
 
 	// AimModel - Recoil
 	vm->RegisterFunction(
-		new NativeFunction1 <StaticFunctionTag, float, Owner>("GetRecoil_MaxPerShot", SCRIPT_NAME, PapyrusAmmoTweaks::GetRecoil_MaxPerShot, vm));
+		new NativeFunction1 <StaticFunctionTag, float, Owner>("GetRecoil_MaxPerShot", ATInstanceData_SCRIPT, PapyrusATInstanceData::GetRecoil_MaxPerShot, vm));
 	vm->RegisterFunction(
-		new NativeFunction2 <StaticFunctionTag, void, Owner, float>("SetRecoil_MaxPerShot", SCRIPT_NAME, PapyrusAmmoTweaks::SetRecoil_MaxPerShot, vm));
+		new NativeFunction2 <StaticFunctionTag, void, Owner, float>("SetRecoil_MaxPerShot", ATInstanceData_SCRIPT, PapyrusATInstanceData::SetRecoil_MaxPerShot, vm));
 	vm->RegisterFunction(
-		new NativeFunction1 <StaticFunctionTag, float, Owner>("GetRecoil_MinPerShot", SCRIPT_NAME, PapyrusAmmoTweaks::GetRecoil_MinPerShot, vm));
+		new NativeFunction1 <StaticFunctionTag, float, Owner>("GetRecoil_MinPerShot", ATInstanceData_SCRIPT, PapyrusATInstanceData::GetRecoil_MinPerShot, vm));
 	vm->RegisterFunction(
-		new NativeFunction2 <StaticFunctionTag, void, Owner, float>("SetRecoil_MinPerShot", SCRIPT_NAME, PapyrusAmmoTweaks::SetRecoil_MinPerShot, vm));
+		new NativeFunction2 <StaticFunctionTag, void, Owner, float>("SetRecoil_MinPerShot", ATInstanceData_SCRIPT, PapyrusATInstanceData::SetRecoil_MinPerShot, vm));
 	vm->RegisterFunction(
-		new NativeFunction1 <StaticFunctionTag, float, Owner>("GetRecoil_ArcMaxDegrees", SCRIPT_NAME, PapyrusAmmoTweaks::GetRecoil_ArcMaxDegrees, vm));
+		new NativeFunction1 <StaticFunctionTag, float, Owner>("GetRecoil_ArcMaxDegrees", ATInstanceData_SCRIPT, PapyrusATInstanceData::GetRecoil_ArcMaxDegrees, vm));
 	vm->RegisterFunction(
-		new NativeFunction2 <StaticFunctionTag, void, Owner, float>("SetRecoil_ArcMaxDegrees", SCRIPT_NAME, PapyrusAmmoTweaks::SetRecoil_ArcMaxDegrees, vm));
+		new NativeFunction2 <StaticFunctionTag, void, Owner, float>("SetRecoil_ArcMaxDegrees", ATInstanceData_SCRIPT, PapyrusATInstanceData::SetRecoil_ArcMaxDegrees, vm));
 	vm->RegisterFunction(
-		new NativeFunction1 <StaticFunctionTag, float, Owner>("GetRecoil_ArcRotate", SCRIPT_NAME, PapyrusAmmoTweaks::GetRecoil_ArcRotate, vm));
+		new NativeFunction1 <StaticFunctionTag, float, Owner>("GetRecoil_ArcRotate", ATInstanceData_SCRIPT, PapyrusATInstanceData::GetRecoil_ArcRotate, vm));
 	vm->RegisterFunction(
-		new NativeFunction2 <StaticFunctionTag, void, Owner, float>("SetRecoil_ArcRotate", SCRIPT_NAME, PapyrusAmmoTweaks::SetRecoil_ArcRotate, vm));
+		new NativeFunction2 <StaticFunctionTag, void, Owner, float>("SetRecoil_ArcRotate", ATInstanceData_SCRIPT, PapyrusATInstanceData::SetRecoil_ArcRotate, vm));
 	vm->RegisterFunction(
-		new NativeFunction1 <StaticFunctionTag, float, Owner>("GetRecoil_BaseStability", SCRIPT_NAME, PapyrusAmmoTweaks::GetRecoil_BaseStability, vm));
+		new NativeFunction1 <StaticFunctionTag, float, Owner>("GetRecoil_BaseStability", ATInstanceData_SCRIPT, PapyrusATInstanceData::GetRecoil_BaseStability, vm));
 	vm->RegisterFunction(
-		new NativeFunction2 <StaticFunctionTag, void, Owner, float>("SetRecoil_BaseStability", SCRIPT_NAME, PapyrusAmmoTweaks::SetRecoil_BaseStability, vm));
+		new NativeFunction2 <StaticFunctionTag, void, Owner, float>("SetRecoil_BaseStability", ATInstanceData_SCRIPT, PapyrusATInstanceData::SetRecoil_BaseStability, vm));
 	vm->RegisterFunction(
-		new NativeFunction1 <StaticFunctionTag, float, Owner>("GetRecoil_HipMult", SCRIPT_NAME, PapyrusAmmoTweaks::GetRecoil_HipMult, vm));
+		new NativeFunction1 <StaticFunctionTag, float, Owner>("GetRecoil_HipMult", ATInstanceData_SCRIPT, PapyrusATInstanceData::GetRecoil_HipMult, vm));
 	vm->RegisterFunction(
-		new NativeFunction2 <StaticFunctionTag, void, Owner, float>("SetRecoil_HipMult", SCRIPT_NAME, PapyrusAmmoTweaks::SetRecoil_HipMult, vm));
+		new NativeFunction2 <StaticFunctionTag, void, Owner, float>("SetRecoil_HipMult", ATInstanceData_SCRIPT, PapyrusATInstanceData::SetRecoil_HipMult, vm));
 	vm->RegisterFunction(
-		new NativeFunction1 <StaticFunctionTag, float, Owner>("GetRecoil_DimSpringForce", SCRIPT_NAME, PapyrusAmmoTweaks::GetRecoil_DimSpringForce, vm));
+		new NativeFunction1 <StaticFunctionTag, float, Owner>("GetRecoil_DimSpringForce", ATInstanceData_SCRIPT, PapyrusATInstanceData::GetRecoil_DimSpringForce, vm));
 	vm->RegisterFunction(
-		new NativeFunction2 <StaticFunctionTag, void, Owner, float>("SetRecoil_DimSpringForce", SCRIPT_NAME, PapyrusAmmoTweaks::SetRecoil_DimSpringForce, vm));
+		new NativeFunction2 <StaticFunctionTag, void, Owner, float>("SetRecoil_DimSpringForce", ATInstanceData_SCRIPT, PapyrusATInstanceData::SetRecoil_DimSpringForce, vm));
 	vm->RegisterFunction(
-		new NativeFunction1 <StaticFunctionTag, float, Owner>("GetRecoil_DimSightsMult", SCRIPT_NAME, PapyrusAmmoTweaks::GetRecoil_DimSightsMult, vm));
+		new NativeFunction1 <StaticFunctionTag, float, Owner>("GetRecoil_DimSightsMult", ATInstanceData_SCRIPT, PapyrusATInstanceData::GetRecoil_DimSightsMult, vm));
 	vm->RegisterFunction(
-		new NativeFunction2 <StaticFunctionTag, void, Owner, float>("SetRecoil_DimSightsMult", SCRIPT_NAME, PapyrusAmmoTweaks::SetRecoil_DimSightsMult, vm));
+		new NativeFunction2 <StaticFunctionTag, void, Owner, float>("SetRecoil_DimSightsMult", ATInstanceData_SCRIPT, PapyrusATInstanceData::SetRecoil_DimSightsMult, vm));
 	vm->RegisterFunction(
-		new NativeFunction1 <StaticFunctionTag, UInt32, Owner>("GetRecoil_RunawayShots", SCRIPT_NAME, PapyrusAmmoTweaks::GetRecoil_RunawayShots, vm));
+		new NativeFunction1 <StaticFunctionTag, UInt32, Owner>("GetRecoil_RunawayShots", ATInstanceData_SCRIPT, PapyrusATInstanceData::GetRecoil_RunawayShots, vm));
 	vm->RegisterFunction(
-		new NativeFunction2 <StaticFunctionTag, void, Owner, UInt32>("SetRecoil_RunawayShots", SCRIPT_NAME, PapyrusAmmoTweaks::SetRecoil_RunawayShots, vm));
+		new NativeFunction2 <StaticFunctionTag, void, Owner, UInt32>("SetRecoil_RunawayShots", ATInstanceData_SCRIPT, PapyrusATInstanceData::SetRecoil_RunawayShots, vm));
 
 	// AimModel - Recoil/CoF Combo
 	vm->RegisterFunction(
-		new NativeFunction2 <StaticFunctionTag, void, Owner, float>("ModRecoil_Percent", SCRIPT_NAME, PapyrusAmmoTweaks::ModRecoil_Percent, vm));
+		new NativeFunction2 <StaticFunctionTag, void, Owner, float>("ModRecoil_Percent", ATInstanceData_SCRIPT, PapyrusATInstanceData::ModRecoil_Percent, vm));
 	vm->RegisterFunction(
-		new NativeFunction2 <StaticFunctionTag, void, Owner, float>("ModAccuracy_Percent", SCRIPT_NAME, PapyrusAmmoTweaks::ModAccuracy_Percent, vm));
+		new NativeFunction2 <StaticFunctionTag, void, Owner, float>("ModAccuracy_Percent", ATInstanceData_SCRIPT, PapyrusATInstanceData::ModAccuracy_Percent, vm));
 
 	// Weapon update
 	vm->RegisterFunction(
-		new NativeFunction1 <StaticFunctionTag, void, Owner>("LogWeaponStats_Gun", SCRIPT_NAME, PapyrusAmmoTweaks::LogWeaponStats_Gun, vm));
+		new NativeFunction1 <StaticFunctionTag, void, Owner>("LogWeaponStats_Gun", ATInstanceData_SCRIPT, PapyrusATInstanceData::LogWeaponStats_Gun, vm));
 	vm->RegisterFunction(
-		new NativeFunction2 <StaticFunctionTag, WeaponStats, Owner, WeaponStats>("GetWeaponBaseStats_Gun", SCRIPT_NAME, PapyrusAmmoTweaks::GetWeaponBaseStats_Gun, vm));
+		new NativeFunction2 <StaticFunctionTag, WeaponStats, Owner, WeaponStats>("GetWeaponBaseStats_Gun", ATInstanceData_SCRIPT, PapyrusATInstanceData::GetWeaponBaseStats_Gun, vm));
 	vm->RegisterFunction(
-		new NativeFunction3 <StaticFunctionTag, void, Owner, WeaponStatsMod, WeaponStats>("UpdateWeaponStats_Gun", SCRIPT_NAME, PapyrusAmmoTweaks::UpdateWeaponStats_Gun, vm));
+		new NativeFunction3 <StaticFunctionTag, void, Owner, WeaponStatsMod, WeaponStats>("UpdateWeaponStats_Gun", ATInstanceData_SCRIPT, PapyrusATInstanceData::UpdateWeaponStats_Gun, vm));
 
 	
 	

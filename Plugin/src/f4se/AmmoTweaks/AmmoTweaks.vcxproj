@@ -31,7 +31,7 @@
     <ClCompile Include="..\f4se\PapyrusValue.cpp" />
     <ClCompile Include="..\f4se\PapyrusVM.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="PapyrusAT.cpp" />
+    <ClCompile Include="PapyrusATInstanceData.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\common\common_vc14.vcxproj">
@@ -66,7 +66,8 @@
     <ClInclude Include="..\f4se\PapyrusUtilities.h" />
     <ClInclude Include="..\f4se\PapyrusValue.h" />
     <ClInclude Include="..\f4se\PapyrusVM.h" />
-    <ClInclude Include="PapyrusAT.h" />
+    <ClInclude Include="GameFormComponentsAT.h" />
+    <ClInclude Include="PapyrusATInstanceData.h" />
     <ClInclude Include="Config.h" />
   </ItemGroup>
   <ItemGroup>

@@ -1,16 +1,17 @@
 #include <shlobj.h>
-#include "../f4se/PluginAPI.h"
 
+#include "../f4se/PluginAPI.h"
 #include "../f4se/PapyrusVM.h"
 #include "../f4se/PapyrusNativeFunctions.h"
 
 #include "Config.h"
-#include "PapyrusAT.h"
+#include "GameFormComponentsAT.h"
+#include "PapyrusATInstanceData.h"
 
 
-IDebugLog gLog;
-PluginHandle g_pluginHandle = kPluginHandle_Invalid;
-F4SEPapyrusInterface   *g_papyrus   = NULL;
+IDebugLog				gLog;
+PluginHandle			g_pluginHandle =	kPluginHandle_Invalid;
+F4SEPapyrusInterface   *g_papyrus   =		NULL;
 
 
 extern "C"
@@ -41,7 +42,7 @@ bool F4SEPlugin_Load(const F4SEInterface *f4se)
 {
     _MESSAGE("%s loaded", PLUGIN_NAME_SHORT);
 
-	g_papyrus->Register(PapyrusAmmoTweaks::RegisterPapyrus);
+	g_papyrus->Register(PapyrusATInstanceData::RegisterPapyrus);
 
     return true;
 }
