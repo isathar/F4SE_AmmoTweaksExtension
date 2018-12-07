@@ -1,204 +1,181 @@
 scriptname AmmoTweaks:ATInstanceData native hidden
 {adds additional functions to use with weapon instances}
 
-
-; AimModel Info from the CK wiki (with edits):
-;
-; Cone of Fire
-;    Min angle: Fully focused angle for cone of fire.
-;    Max angle: Maximum angle for cone of fire.
-;    Increase per shot: Cone of fire increases by this amount per shot.
-;    Decrease per sec: Cone of fire decreases by this amount per second, after the delay.
-;    Decrease delay MS: Delay before cone of fire begins to decrease. (In milliseconds)
-;    Sneak multiplier: Cone of fire is multiplied by this amount while sneaking.
-;    Iron Sights Multiplier: Cone of fire is multiplied by this amount while sighted.
-;
-; Recoil
-;    Arc: Recoil will kick in a random direction within this arc. (In degrees)
-;			0 means recoil will always kick in the same direction. 
-;			360 means recoil will kick in an entirely random direction.
-;    Arc rotate: What angle (in degrees, clockwise) is the center of the recoil arc. 
-;			0 is straight up, 90 is straight right, 180 is straight down, etc...
-;    Diminish spring force: How fast/much the crosshair returns to its original position after shooting.
-;    Diminish sights mult: multiplier applied to diminish spring force while sighted?
-;    Max per shot: Maximum amount of recoil per shot.
-;    Min per shot: Minimum amount of recoil per shot.
-;    Hip mult: Multiplier for recoil when not aiming down sights.
-;    Runaway Recoil shots: number of shots before recoil becomes overwhelming?
-;    Base Stability: Higher number reduces the scoped sway. Not sure why this is grouped with recoil.
-
-
-; Structs
-; - used to pass weapon stats that need to be modified to the plugin
-
-; stores a weapon's 'clean' stats (without scripted modifiers)
-Struct WeaponStats
-	Form 	AmmoItem = 			none
-	Form	ProjOverride = 		none
-	Form	ImpactDataForm = 	none
-	Form	ZoomDataForm = 		none
-	Form	NPCAmmoList = 		none
-	
-	float 	fDamage = 			1.0
-	float 	fCritDmgMult =		1.0
-	float 	fCritChanceMult =	1.0
-	float 	fProjectileCount = 	1.0
-	int 	iProjOffset = 		0x200
-	
-	float 	fMaxRange = 		256.0
-	float 	fMinRange = 		64.0
-	
-	float 	fRecoilMax = 		1.0
-	float 	fRecoilMin = 		1.0
-	float 	fCoFMax = 			1.0
-	float 	fCoFMin = 			1.0
-EndStruct
-
-; stores scripted overrides and multipliers to a weapon's stats
-Struct WeaponStatsMod
-	Form 	AmmoItem = 			none
-	Form	ProjOverride = 		none
-	Form	ImpactDataForm = 	none
-	Form	ZoomDataForm = 		none
-	Form	NPCAmmoList = 		none
-	
-	float 	fDamageMult = 		1.0
-	float 	fCritDmgMult =		1.0
-	float 	fCritChanceMult =	1.0
-	float 	fProjectileMult = 	1.0
-	
-	float 	fRangeMult = 		1.0
-	
-	float 	fRecoilMult = 		1.0
-	float 	fCoFMult = 			1.0
-EndStruct
-
-
-
-; returns the F4SE plugin's (AmmoTweaks.dll) version
-int Function GetVersionCode() native global
-
-
-; prints the instance's AimModel variables to the log
-Function LogAimModelVars(InstanceData:Owner akOwner) native global
-
-Function LogWeaponStats_Gun(InstanceData:Owner akOwner) native global
-
-
+import InstanceData
 
 
 ;****************************  ImpactDataSet  **********************************
 
 ; returns the instance's ImpactDataSet
-Form Function GetImpactDataSet(InstanceData:Owner akOwner) native global
+Form Function GetImpactDataSet(Owner akOwner) native global
 
 ; sets the instance's ImpactDataSet
 ; - takes effect immediately
-Function SetImpactDataSet(InstanceData:Owner akOwner, Form newImpactData) native global
+Function SetImpactDataSet(Owner akOwner, Form newImpactData) native global
 
 
 ;****************************  ZoomData  **********************************
 
 ; returns the instance's ZoomData
-Form Function GetZoomData(InstanceData:Owner akOwner) native global
+Form Function GetZoomData(Owner akOwner) native global
 
 ; sets the instance's ZoomData
-Function SetZoomData(InstanceData:Owner akOwner, Form newZoomData) native global
+Function SetZoomData(Owner akOwner, Form newZoomData) native global
 
 
 ;****************************   AimModel   **********************************
 ; - all changes to the AimModel require the weapon to be unequipped to take effect
+; - partially from the CK wiki:
+;--------------------------------------------------------------------------------------
+; Cone of Fire/Spread:
+;    Min angle: 				min. spread angle (crosshair size)
+;    Max angle:					max. spread angle (crosshair size)
+;    Increase per shot: 		spread increase per shot
+;    Decrease per sec: 			spread decrease per second (after delay)
+;    Decrease delay MS: 		delay in ms after firing until spread starts to decrease
+;    Sneak multiplier: 			multiplier applied to spread while sneaking/crouche.
+;    Iron Sights Multiplier: 	multiplier applied to spread while aiming without a scope
+;
+; Recoil:
+;    Arc: 						max. difference from the base recoil angle per shot in degrees
+;								-	0 means recoil will always kick in the same direction. 
+;								-	360 means recoil will kick in an entirely random direction.
+;    Arc rotate: 				angle for the recoil direction (clock-wise from 12:00)
+;    Diminish spring force:		amount of automatic aim correction after recoil
+;    Diminish sights mult: 		amount of automatic aim correction after recoil while aiming
+;    Max per shot: 				max. amount of recoil per shot
+;    Min per shot: 				min. amount of recoil per shot
+;    Hip mult: 					multiplier applied to recoil while firing from the hip
+;    Runaway Recoil shots: 		the number of shots before recoil becomes unbearable?
+;    Base Stability: 			multiplier applied to the amount of camera sway while using a scope
+;--------------------------------------------------------------------------------------
 
 ; returns the instance's AimModel 
 ; - any changes to the aimmodel through objectmods, etc will cause this to return none
-Form Function GetAimModel(InstanceData:Owner akOwner) native global
+Form Function GetAimModel(Owner akOwner) native global
 
 ; sets the instance's AimModel 
 ;     Warning: also reverts any scripted modifiers/objectmod changes to AimModel
-Function SetAimModel(InstanceData:Owner akOwner, Form newAimModel) native global
+Function SetAimModel(Owner akOwner, Form newAimModel) native global
 
+; prints the instance's AimModel variables to the log
+Function LogAimModelVars(Owner akOwner) native global
 
-;--------------------------------------------------------------------------------------
 ; Cone of Fire:
 ; 		- Max Angle
-float Function GetConeOfFire_MaxAngle(InstanceData:Owner akOwner) native global
-Function SetConeOfFire_MaxAngle(InstanceData:Owner akOwner, float fNewVal) native global
+float Function GetConeOfFire_MaxAngle(Owner akOwner) native global
+Function SetConeOfFire_MaxAngle(Owner akOwner, float fNewVal) native global
 
 ; 		- Min Angle
-float Function GetConeOfFire_MinAngle(InstanceData:Owner akOwner) native global
-Function SetConeOfFire_MinAngle(InstanceData:Owner akOwner, float fNewVal) native global
+float Function GetConeOfFire_MinAngle(Owner akOwner) native global
+Function SetConeOfFire_MinAngle(Owner akOwner, float fNewVal) native global
 
 ; 		- Increase per Shot
-float Function GetConeOfFire_IncreasePerShot(InstanceData:Owner akOwner) native global
-Function SetConeOfFire_IncreasePerShot(InstanceData:Owner akOwner, float fNewVal) native global
+float Function GetConeOfFire_IncreasePerShot(Owner akOwner) native global
+Function SetConeOfFire_IncreasePerShot(Owner akOwner, float fNewVal) native global
 
 ; 		- Decrease per Second
-float Function GetConeOfFire_DecreasePerSec(InstanceData:Owner akOwner) native global
-Function SetConeOfFire_DecreasePerSec(InstanceData:Owner akOwner, float fNewVal) native global
+float Function GetConeOfFire_DecreasePerSec(Owner akOwner) native global
+Function SetConeOfFire_DecreasePerSec(Owner akOwner, float fNewVal) native global
 
 ; 		- Decrease Delay (in milliseconds)
-int Function GetConeOfFire_DecreaseDelayms(InstanceData:Owner akOwner) native global
-Function SetConeOfFire_DecreaseDelayms(InstanceData:Owner akOwner, int iNewVal) native global
+int Function GetConeOfFire_DecreaseDelayms(Owner akOwner) native global
+Function SetConeOfFire_DecreaseDelayms(Owner akOwner, int iNewVal) native global
 
 ; 		- Sneak Multiplier
-float Function GetConeOfFire_SneakMult(InstanceData:Owner akOwner) native global
-Function SetConeOfFire_SneakMult(InstanceData:Owner akOwner, float fNewVal) native global
+float Function GetConeOfFire_SneakMult(Owner akOwner) native global
+Function SetConeOfFire_SneakMult(Owner akOwner, float fNewVal) native global
 
 ; 		- Iron Sights Multiplier
-float Function GetConeOfFire_IronSightsMult(InstanceData:Owner akOwner) native global
-Function SetConeOfFire_IronSightsMult(InstanceData:Owner akOwner, float fNewVal) native global
-
+float Function GetConeOfFire_IronSightsMult(Owner akOwner) native global
+Function SetConeOfFire_IronSightsMult(Owner akOwner, float fNewVal) native global
 
 ;--------------------------------------------------------------------------------------
 ; Recoil:
 ; 		- Min per Shot
-float Function GetRecoil_MinPerShot(InstanceData:Owner akOwner) native global
-Function SetRecoil_MinPerShot(InstanceData:Owner akOwner, float fNewVal) native global
+float Function GetRecoil_MinPerShot(Owner akOwner) native global
+Function SetRecoil_MinPerShot(Owner akOwner, float fNewVal) native global
 
 ; 		- Max per Shot
-float Function GetRecoil_MaxPerShot(InstanceData:Owner akOwner) native global
-Function SetRecoil_MaxPerShot(InstanceData:Owner akOwner, float fNewVal) native global
+float Function GetRecoil_MaxPerShot(Owner akOwner) native global
+Function SetRecoil_MaxPerShot(Owner akOwner, float fNewVal) native global
 
 ; 		- Arc (Max. angle)
-float Function GetRecoil_ArcMaxDegrees(InstanceData:Owner akOwner) native global
-Function SetRecoil_ArcMaxDegrees(InstanceData:Owner akOwner, float fNewVal) native global
+float Function GetRecoil_ArcMaxDegrees(Owner akOwner) native global
+Function SetRecoil_ArcMaxDegrees(Owner akOwner, float fNewVal) native global
 
 ; 		- Arc Rotate (center)
-float Function GetRecoil_ArcRotate(InstanceData:Owner akOwner) native global
-Function SetRecoil_ArcRotate(InstanceData:Owner akOwner, float fNewVal) native global
+float Function GetRecoil_ArcRotate(Owner akOwner) native global
+Function SetRecoil_ArcRotate(Owner akOwner, float fNewVal) native global
 
 ; 		- Base Stability
-float Function GetRecoil_BaseStability(InstanceData:Owner akOwner) native global
-Function SetRecoil_BaseStability(InstanceData:Owner akOwner, float fNewVal) native global
+float Function GetRecoil_BaseStability(Owner akOwner) native global
+Function SetRecoil_BaseStability(Owner akOwner, float fNewVal) native global
 
 ; 		- Hip-fire multiplier
-float Function GetRecoil_HipMult(InstanceData:Owner akOwner) native global
-Function SetRecoil_HipMult(InstanceData:Owner akOwner, float fNewVal) native global
+float Function GetRecoil_HipMult(Owner akOwner) native global
+Function SetRecoil_HipMult(Owner akOwner, float fNewVal) native global
 
 ; 		- Diminish Spring Force
-float Function GetRecoil_DimSpringForce(InstanceData:Owner akOwner) native global
-Function SetRecoil_DimSpringForce(InstanceData:Owner akOwner, float fNewVal) native global
+float Function GetRecoil_DimSpringForce(Owner akOwner) native global
+Function SetRecoil_DimSpringForce(Owner akOwner, float fNewVal) native global
 
 ; 		- Diminish Sighted Multiplier
-float Function GetRecoil_DimSightsMult(InstanceData:Owner akOwner) native global
-Function SetRecoil_DimSightsMult(InstanceData:Owner akOwner, float fNewVal) native global
+float Function GetRecoil_DimSightsMult(Owner akOwner) native global
+Function SetRecoil_DimSightsMult(Owner akOwner, float fNewVal) native global
 
 ; 		- Runaway Shots
-int Function GetRecoil_RunawayShots(InstanceData:Owner akOwner) native global
-Function SetRecoil_RunawayShots(InstanceData:Owner akOwner, int iNewVal) native global
+int Function GetRecoil_RunawayShots(Owner akOwner) native global
+Function SetRecoil_RunawayShots(Owner akOwner, int iNewVal) native global
 
 
-;--------------------------------------------------------------------------------------
-; Combined AimModel Functions:
-;		- Mod the instance's Recoil variables by a percentage (as 0.0-1.0)
-Function ModRecoil_Percent(InstanceData:Owner akOwner, float fPercent) native global
+;****************************   ActorValueModifiers   **********************************
+; - instance actorvalue modifiers (omod avActorValues)
+; - these have to be non-zero integers
+; - the plugin prevents the vanilla issue of ActorValue modifers freaking out when set to 0 by removing them from the instance
 
-; 		- Mod the instance's Cone of Fire variables by a percentage (as 0.0-1.0)
-Function ModAccuracy_Percent(InstanceData:Owner akOwner, float fPercent) native global
+; prints all AV modifiers to the log
+Function LogAVModifiers(Owner akOwner) native global
+
+; returns the value of an existing modifier (or 0 if none)
+int Function GetAVModifier(Owner akOwner, ActorValue AVToGet) native global
+
+; sets an ActorValue modifier directly
+Function SetAVModifier(Owner akOwner, ActorValue AVToSet, int iValue) native global
+; adds iValue to an existing ActorValue modifier, adding the modifier if needed
+Function AddAVModifier(Owner akOwner, ActorValue AVToAdd, int iValue) native global
+; modifies an existing Actorvalue modifier by a percentage between 0.0-1.0
+Function ModAVModifier(Owner akOwner, ActorValue AVToMod, float fValue) native global
 
 
+;****************************   Keywords   **********************************
+; - functions for the manipulation of single instance-added keywords
+
+; checks if a keyword has been added by an omod
+bool Function HasWeapKeyword(Owner akOwner, Keyword kwToCheck) native global
+
+; adds a keyword to a weapon instance
+Function AddWeapKeyword(Owner akOwner, Keyword kwToAdd) native global
+; removes a keyword from a weapon instance
+Function RemoveWeapKeyword(Owner akOwner, Keyword kwToRemove) native global
 
 
-WeaponStats Function GetWeaponBaseStats_Gun(InstanceData:Owner akOwner, WeaponStats CurStats) native global
+;****************************   DamageTypes   **********************************
 
-Function UpdateWeaponStats_Gun(InstanceData:Owner akOwner, WeaponStatsMod ModStats, WeaponStats CurStats) native global
+; prints all DamageTypes to the log
+Function LogDamageTypes(Owner akOwner) native global
+
+
+;****************************   SoundLevel   **********************************
+; 0=loud, 1=normal, 2=silent, 3=very loud
+
+int Function GetSoundLevel(Owner akOwner) native global
+Function SetSoundLevel(Owner akOwner, int iNewVal) native global
+
+
+;****************************   HitEffect   **********************************
+; 0=normal, 1=dismember only, 2=explode only, 3=no dismember/explode
+
+int Function GetHitEffect(Owner akOwner) native global
+Function SetHitEffect(Owner akOwner, int iNewVal) native global
+

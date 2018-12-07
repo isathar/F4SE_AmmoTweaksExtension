@@ -1,5 +1,5 @@
 #pragma once
-#include "../f4se_common/f4se_version.h"
+#include "f4se_common/f4se_version.h"
 
 //-----------------------
 // Plugin Information
@@ -10,4 +10,3 @@
 #define PLUGIN_NAME_LONG			"AmmoTweaks Extension"
 #define SUPPORTED_RUNTIME_VERSION   CURRENT_RELEASE_RUNTIME
 #define MINIMUM_RUNTIME_VERSION     SUPPORTED_RUNTIME_VERSION
-#define COMPATIBLE(runtimeVersion)  (runtimeVersion == SUPPORTED_RUNTIME_VERSION)
