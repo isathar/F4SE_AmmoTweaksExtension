@@ -99,9 +99,6 @@
     <ClInclude Include="..\f4se\f4se_common\Relocation.h">
       <Filter>Resource Files\F4SEHeaders</Filter>
     </ClInclude>
-    <ClInclude Include="ATInstanceData.h">
-      <Filter>Plugin Files\Header</Filter>
-    </ClInclude>
     <ClInclude Include="ATWeaponRef.h">
       <Filter>Plugin Files\Header</Filter>
     </ClInclude>
@@ -120,14 +117,26 @@
     <ClInclude Include="ATNPCTweaks.h">
       <Filter>Plugin Files\Header</Filter>
     </ClInclude>
-    <ClInclude Include="ATConfig.h">
-      <Filter>Plugin Files\Header</Filter>
-    </ClInclude>
     <ClInclude Include="ATDefinitions.h">
       <Filter>Plugin Files\Header</Filter>
     </ClInclude>
     <ClInclude Include="SimpleIni\SimpleIni.h">
       <Filter>Resource Files\SimpleIni</Filter>
+    </ClInclude>
+    <ClInclude Include="ATConfigLoad.h">
+      <Filter>Plugin Files\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="ATConfigSave.h">
+      <Filter>Plugin Files\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\Utilities.h">
+      <Filter>Resource Files\F4SEHeaders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\f4se_common\f4se_version.h">
+      <Filter>Resource Files\F4SEHeaders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\f4se\f4se\PapyrusObjects.h">
+      <Filter>Resource Files\F4SEHeaders</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -203,9 +212,6 @@
     <ClCompile Include="..\f4se\f4se_common\Relocation.cpp">
       <Filter>Resource Files\F4SESource</Filter>
     </ClCompile>
-    <ClCompile Include="ATInstanceData.cpp">
-      <Filter>Plugin Files\Source</Filter>
-    </ClCompile>
     <ClCompile Include="ATWeaponRef.cpp">
       <Filter>Plugin Files\Source</Filter>
     </ClCompile>
@@ -224,8 +230,14 @@
     <ClCompile Include="ATNPCTweaks.cpp">
       <Filter>Plugin Files\Source</Filter>
     </ClCompile>
-    <ClCompile Include="ATConfig.cpp">
+    <ClCompile Include="ATConfigLoad.cpp">
       <Filter>Plugin Files\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="ATConfigSave.cpp">
+      <Filter>Plugin Files\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\f4se\f4se\PapyrusObjects.cpp">
+      <Filter>Resource Files\F4SESource</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

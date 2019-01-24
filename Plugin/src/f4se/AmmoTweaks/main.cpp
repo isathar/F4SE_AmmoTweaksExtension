@@ -20,13 +20,18 @@ void F4SEMessageHandler(F4SEMessagingInterface::Message* msg)
 			{
 			if ((bool)msg->data) {
 				_MESSAGE("Game Data ready - loading modifications...");
-				ATConfig::LoadGameDataFromINI();
+				ATConfig::EditGameData();
 			}
 			}
 			break;
 		case F4SEMessagingInterface::kMessage_PostLoadGame:
 			{
 				
+			}
+			break;
+		case F4SEMessagingInterface::kMessage_PostSaveGame:
+			{
+				_MESSAGE("Game saved - %s : %x", msg->sender, msg->data);
 			}
 			break;
 	}
@@ -47,8 +52,7 @@ bool F4SEPlugin_Query(const F4SEInterface * f4se, PluginInfo * info)
 	info->infoVersion = PluginInfo::kInfoVersion;
 	info->name =		PLUGIN_NAME_SHORT;
 	info->version =		PLUGIN_VERSION;
-
-
+	
 	g_pluginHandle =	f4se->GetPluginHandle();
 
 	g_messaging = (F4SEMessagingInterface *)f4se->QueryInterface(kInterface_Messaging);

@@ -45,17 +45,10 @@ namespace ATShared
 
 namespace ATConfig
 {
-	void LoadGameDataFromINI();
+	void EditGameData();
 	void SaveGameDataToINI();
 }
 
-
-
-// Papyrus registrations:
-namespace ATInstanceData
-{
-	bool RegisterPapyrus(VirtualMachine * vm);
-}
 
 namespace ATWeaponRef
 {

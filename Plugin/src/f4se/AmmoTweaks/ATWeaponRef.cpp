@@ -1,9 +1,13 @@
+#include "ATWeaponRef.h"
+
 #include "f4se/GameExtraData.h"
 #include "f4se/GameRTTI.h"
 #include "f4se/PapyrusNativeFunctions.h"
+#include "f4se/PapyrusUtilities.h"
+
 #include <time.h>
 
-#include "ATWeaponRef.h"
+
 
 
 #define SCRIPTNAME "AmmoTweaks:Weapon:WeaponRefBase"
@@ -13,14 +17,6 @@
 UInt32 ATCaliber::ProcessInstanceData(TESObjectWEAP::InstanceData *instanceData, int ammoTypeIndex)
 {
 	if (instanceData) {
-		// add a random ammo type if the weapon was just created
-		if (ammoTypeIndex < 0) {
-			// time-based RNG seed
-			srand(time(NULL) * ATShared::SharedData->numProcessedWeaps);
-			ammoTypeIndex = std::rand() % (ammoTypes.count);
-		}
-		
-
 		ATAmmoType newAmmoType;
 		if (ammoTypes.GetNthItem(ammoTypeIndex, newAmmoType)) {
 			bool hasSuppressor = false;
@@ -39,16 +35,24 @@ UInt32 ATCaliber::ProcessInstanceData(TESObjectWEAP::InstanceData *instanceData,
 			// check for special case mods
 			if (instanceData->keywords) {
 				for (UInt8 i = 0; i < instanceData->keywords->numKeywords; i++) {
-					if (instanceData->keywords->keywords[i] == ATShared::SharedData->suppressorKW)
-						hasSuppressor = true;
-					else if (instanceData->keywords->keywords[i] == ATShared::SharedData->muzBrakeKW)
-						hasMuzBrake = true;
-					else if (instanceData->keywords->keywords[i] == ATShared::SharedData->compensatorKW)
-						hasMuzBrake = true;
-					else if (instanceData->keywords->keywords[i] == ATShared::SharedData->legendaryExplKW)
-						hasLegExpl = true;
-					else if (instanceData->keywords->keywords[i] == ATShared::SharedData->legendaryTwoShotKW)
-						hasLegTwoShot = true;
+					if (instanceData->keywords->keywords[i]) {
+						UInt32 tmpFormID = instanceData->keywords->keywords[i]->formID;
+						if (!hasLegExpl) {
+							hasLegExpl = (tmpFormID == ATShared::SharedData->kwLegExplosive);
+						}
+						if (!hasSuppressor) {
+							hasSuppressor = (tmpFormID == ATShared::SharedData->kwMuzSuppressor);
+						}
+						if (!hasMuzBrake) {
+							hasMuzBrake = (tmpFormID == ATShared::SharedData->kwMuzBrake);
+						}
+						if (!hasMuzBrake) {
+							hasMuzBrake = (tmpFormID == ATShared::SharedData->kwMuzCompensator);
+						}
+						if (!hasLegTwoShot) {
+							hasLegTwoShot = (tmpFormID == ATShared::SharedData->kwLegTwoShot);
+						}
+					}
 				}
 			}
 
@@ -58,11 +62,12 @@ UInt32 ATCaliber::ProcessInstanceData(TESObjectWEAP::InstanceData *instanceData,
 			}
 			else if (hasSuppressor) {
 				instanceData->unk114 = newAmmoType.iSoundLevelSup;
+				// remove the silenced sound keyword if needed
 				if (newAmmoType.iSoundLevelSup != 2) {
 					if (instanceData->keywords) {
 						for (UInt8 i = 0; i < instanceData->keywords->numKeywords; i++) {
-							if (instanceData->keywords->keywords[i] == ATShared::SharedData->soundKW_Silenced) {
-								instanceData->keywords->keywords[i] = ATShared::SharedData->soundKW_SilencedDisable;
+							if (instanceData->keywords->keywords[i] == ATShared::SharedData->kwSoundSilenced) {
+								instanceData->keywords->keywords[i] = ATShared::SharedData->kwSoundSilencedDisabled;
 								i = instanceData->keywords->numKeywords;
 							}
 						}
@@ -93,13 +98,17 @@ UInt32 ATCaliber::ProcessInstanceData(TESObjectWEAP::InstanceData *instanceData,
 			}
 
 			// impactDataSet
-			if (hasLegExpl && newAmmoType.projImpactDataExp) {
-				instanceData->unk58 = newAmmoType.projImpactDataExp;
+			if (hasLegExpl) {
+				if (impacts.count > 1) {
+					instanceData->unk58 = impacts[1];
+				}
 			}
-			else if (newAmmoType.projImpactData) {
-				instanceData->unk58 = newAmmoType.projImpactData;
+			else if(newAmmoType.iImpactIndex > -1) {
+				if (impacts.count > newAmmoType.iImpactIndex) {
+					instanceData->unk58 = impacts[newAmmoType.iImpactIndex];
+				}
 			}
-
+			
 			if (instanceData->firingData) {
 				// set projectile
 				if (hasLegExpl) {
@@ -175,12 +184,12 @@ UInt32 ATCaliber::ProcessInstanceData(TESObjectWEAP::InstanceData *instanceData,
 				}
 			}
 
-			// auto fire sound tweak
+			// remove the automatic sound keyword if needed
 			if (ATShared::SharedData->bUseSingleFireAutoSounds) {
 				if (instanceData->keywords) {
 					for (UInt8 i = 0; i < instanceData->keywords->numKeywords; i++) {
-						if (instanceData->keywords->keywords[i] == ATShared::SharedData->soundKW_Automatic) {
-							instanceData->keywords->keywords[i] = ATShared::SharedData->soundKW_AutomaticDisable;
+						if (instanceData->keywords->keywords[i] == ATShared::SharedData->kwSoundAuto) {
+							instanceData->keywords->keywords[i] = ATShared::SharedData->kwSoundAutoDisabled;
 							i = instanceData->keywords->numKeywords;
 						}
 					}
@@ -260,7 +269,7 @@ void ATWeapon::ProcessInstanceData(TESObjectWEAP::InstanceData *instanceData)
 				TBO_InstanceData::ValueModifier tempAVypeMod;
 				instanceData->modifiers->GetNthItem(i, tempAVypeMod);
 				if (tempAVypeMod.avInfo) {
-					if (tempAVypeMod.avInfo == ATShared::SharedData->MaxConditionAV) {
+					if (tempAVypeMod.avInfo == ATShared::SharedData->avMaxCondition) {
 						bFoundMaxCND = true;
 						if (curMaxCND > 0) {
 							tempAVypeMod.unk08 = curMaxCND;
@@ -269,7 +278,7 @@ void ATWeapon::ProcessInstanceData(TESObjectWEAP::InstanceData *instanceData)
 							instanceData->modifiers->Remove(i);
 						}
 					}
-					else if (tempAVypeMod.avInfo == ATShared::SharedData->SkillReqAV) {
+					else if (tempAVypeMod.avInfo == ATShared::SharedData->avSkillReq) {
 						bFoundSkillReq = true;
 						if (iSkillReq > 0) {
 							tempAVypeMod.unk08 = iSkillReq;
@@ -278,7 +287,7 @@ void ATWeapon::ProcessInstanceData(TESObjectWEAP::InstanceData *instanceData)
 							instanceData->modifiers->Remove(i);
 						}
 					}
-					else if (tempAVypeMod.avInfo == ATShared::SharedData->HUDIconAV_Weapon) {
+					else if (tempAVypeMod.avInfo == ATShared::SharedData->avHUDIcon_Weapon) {
 						bFoundHUDIcon = true;
 						if (HUDIconIndex > 0) {
 							tempAVypeMod.unk08 = HUDIconIndex;
@@ -287,7 +296,7 @@ void ATWeapon::ProcessInstanceData(TESObjectWEAP::InstanceData *instanceData)
 							instanceData->modifiers->Remove(i);
 						}
 					}
-					else if (tempAVypeMod.avInfo == ATShared::SharedData->HasInstanceAV) {
+					else if (tempAVypeMod.avInfo == ATShared::SharedData->avHasInstance) {
 						bFoundInstanceCheck = true;
 					}
 				}
@@ -298,7 +307,7 @@ void ATWeapon::ProcessInstanceData(TESObjectWEAP::InstanceData *instanceData)
 		TBO_InstanceData::ValueModifier addAVMod;
 		if (!bFoundMaxCND) {
 			if (curMaxCND > 0) {
-				addAVMod.avInfo = ATShared::SharedData->MaxConditionAV;
+				addAVMod.avInfo = ATShared::SharedData->avMaxCondition;
 				addAVMod.unk08 = curMaxCND;
 				instanceData->modifiers->Push(addAVMod);
 			}
@@ -307,7 +316,7 @@ void ATWeapon::ProcessInstanceData(TESObjectWEAP::InstanceData *instanceData)
 		if (!bFoundSkillReq) {
 			if (iSkillReq > 0) {
 				TBO_InstanceData::ValueModifier addAVypeMod2;
-				addAVypeMod2.avInfo = ATShared::SharedData->SkillReqAV;
+				addAVypeMod2.avInfo = ATShared::SharedData->avSkillReq;
 				addAVypeMod2.unk08 = iSkillReq;
 				instanceData->modifiers->Push(addAVypeMod2);
 			}
@@ -316,7 +325,7 @@ void ATWeapon::ProcessInstanceData(TESObjectWEAP::InstanceData *instanceData)
 		if (!bFoundHUDIcon) {
 			if (HUDIconIndex > 0) {
 				TBO_InstanceData::ValueModifier addAVypeMod3;
-				addAVypeMod3.avInfo = ATShared::SharedData->HUDIconAV_Weapon;
+				addAVypeMod3.avInfo = ATShared::SharedData->avHUDIcon_Weapon;
 				addAVypeMod3.unk08 = HUDIconIndex;
 				instanceData->modifiers->Push(addAVypeMod3);
 			}
@@ -324,7 +333,7 @@ void ATWeapon::ProcessInstanceData(TESObjectWEAP::InstanceData *instanceData)
 
 		if (!bFoundInstanceCheck) {
 			TBO_InstanceData::ValueModifier addAVypeMod4;
-			addAVypeMod4.avInfo = ATShared::SharedData->HasInstanceAV;
+			addAVypeMod4.avInfo = ATShared::SharedData->avHasInstance;
 			addAVypeMod4.unk08 = 1;
 			instanceData->modifiers->Push(addAVypeMod4);
 		}
@@ -407,7 +416,12 @@ namespace ATWeaponRef
 	void LogWeaponStats_Gun(VMRefOrInventoryObj *thisObj)
 	{
 		if (thisObj) {
-			_MESSAGE("\n Weapon: %s", GetWeapName(thisObj));
+			TESObjectREFR *tempRef = thisObj->GetObjectReference();
+			UInt32 tempWeapID = 0x0;
+			if (tempRef) {
+				tempWeapID = tempRef->formID;
+			}
+			_MESSAGE("\n Weapon: 0x%08x - %s", tempWeapID, GetWeapName(thisObj));
 			TESObjectWEAP::InstanceData *instanceData = GetWeapRefInstanceData(thisObj);
 
 			if (instanceData) {
@@ -647,14 +661,15 @@ namespace ATWeaponRef
 	}
 
 	// returns the current caliber's objectmod
-	TESForm* GetCurCaliberMod(VMRefOrInventoryObj *thisObj)
+	BGSMod::Attachment::Mod* GetCurCaliberMod(VMRefOrInventoryObj *thisObj)
 	{
 		if (thisObj) {
 			TESObjectWEAP::InstanceData *instanceData = GetWeapRefInstanceData(thisObj);
 			if (instanceData) {
 				int iCaliber = UpdateCaliber(instanceData);
 				if (iCaliber > -1) {
-					ATCaliber *newCaliber = ATShared::SharedData->g_ATCalibers[iCaliber];
+					ATCaliber *newCaliber = nullptr;
+					ATShared::SharedData->g_ATCalibers.GetNthItem(iCaliber, newCaliber);
 					if (newCaliber) {
 						return newCaliber->caliberMod;
 					}
@@ -673,13 +688,16 @@ namespace ATWeaponRef
 				if (curCaliber) {
 					int iCaliber = ATShared::SharedData->index_ATCalibersEquipped.GetItemIndex(curCaliber);
 					if (iCaliber > -1) {
-						ATCaliber *newCaliber = ATShared::SharedData->g_ATCalibers[iCaliber];
 						TESAmmo *curAmmo = instanceData->ammo;
-						if (curAmmo && newCaliber) {
-							for (UInt8 i = 0; i < newCaliber->ammoTypes.count; i++) {
-								if (newCaliber->ammoTypes[i].ammoForm) {
-									if (curAmmo == newCaliber->ammoTypes[i].ammoForm) {
-										return i;
+						if (curAmmo) {
+							ATCaliber *newCaliber = nullptr;
+							ATShared::SharedData->g_ATCalibers.GetNthItem(iCaliber, newCaliber);
+							if (newCaliber) {
+								for (UInt8 i = 0; i < newCaliber->ammoTypes.count; i++) {
+									if (newCaliber->ammoTypes[i].ammoForm) {
+										if (curAmmo == newCaliber->ammoTypes[i].ammoForm) {
+											return i;
+										}
 									}
 								}
 							}
@@ -713,15 +731,15 @@ namespace ATWeaponRef
 								instanceData->modifiers = new tArray<TBO_InstanceData::ValueModifier>();
 							}
 
-							return tempWeap->GetWearMult(instanceData);
-
-							/*
+							float fWearMult =  tempWeap->GetWearMult(instanceData);
+							
 							if (instanceData->modifiers->count > 0) {
 								for (UInt8 i = 0; i < instanceData->modifiers->count; i++) {
 									TBO_InstanceData::ValueModifier tempAVypeMod;
 									instanceData->modifiers->GetNthItem(i, tempAVypeMod);
 									if (tempAVypeMod.avInfo) {
-										if (tempAVypeMod.avInfo->formID == ATShared::SharedData->MaxConditionAV->formID) {
+										if (tempAVypeMod.avInfo->formID == ATShared::SharedData->avWearPerShot->formID) {
+											fWearMult = fWearMult * (float)tempAVypeMod.unk08;
 											instanceData->modifiers->Remove(i);
 											i = instanceData->modifiers->count;
 										}
@@ -729,11 +747,15 @@ namespace ATWeaponRef
 								}
 							}
 
+							if (fWearMult <= 0.0) {
+								fWearMult = 1.0;
+							}
+
 							TBO_InstanceData::ValueModifier addAVypeMod;
-							addAVypeMod.avInfo = ATShared::SharedData->MaxConditionAV;
-							addAVypeMod.unk08 = curMaxCND;
+							addAVypeMod.avInfo = ATShared::SharedData->avWearPerShot;
+							addAVypeMod.unk08 = (UInt32)fWearMult;
 							instanceData->modifiers->Push(addAVypeMod);
-							*/
+							return fWearMult;
 						}
 					}
 				}
@@ -753,7 +775,7 @@ namespace ATWeaponRef
 						TBO_InstanceData::ValueModifier tempAVypeMod;
 						instanceData->modifiers->GetNthItem(i, tempAVypeMod);
 						if (tempAVypeMod.avInfo) {
-							if (tempAVypeMod.avInfo == ATShared::SharedData->MaxConditionAV) {
+							if (tempAVypeMod.avInfo == ATShared::SharedData->avMaxCondition) {
 								return tempAVypeMod.unk08;
 							}
 						}
@@ -774,7 +796,7 @@ namespace ATWeaponRef
 						TBO_InstanceData::ValueModifier tempAVypeMod;
 						instanceData->modifiers->GetNthItem(i, tempAVypeMod);
 						if (tempAVypeMod.avInfo) {
-							if (tempAVypeMod.avInfo == ATShared::SharedData->HasInstanceAV) {
+							if (tempAVypeMod.avInfo == ATShared::SharedData->avHasInstance) {
 								return true;
 							}
 						}
@@ -809,6 +831,29 @@ namespace ATWeaponRef
 		return result;
 	}
 
+	VMArray<BGSMod::Attachment::Mod*> GetMuzzleList(VMRefOrInventoryObj *thisObj)
+	{
+		VMArray<BGSMod::Attachment::Mod*> result;
+		if (thisObj) {
+			TESObjectWEAP::InstanceData *instanceData = GetWeapRefInstanceData(thisObj);
+			if (instanceData) {
+				UInt32 iCaliber = UpdateCaliber(instanceData);
+				if (iCaliber > -1) {
+					ATCaliber *newCaliber = ATShared::SharedData->g_ATCalibers[iCaliber];
+					if (newCaliber) {
+						for (UInt8 i = 0; i < newCaliber->ammoTypes.count; i++) {
+							//result.Push(&newCaliber->ammoTypes[i].ammoForm);
+						}
+					}
+				}
+				else {
+					//result.Push(&instanceData->ammo);
+				}
+			}
+		}
+		return result;
+	}
+
 	VMArray<BGSKeyword*> GetWpnKeywords(VMRefOrInventoryObj *thisObj)
 	{
 		VMArray<BGSKeyword*> result;
@@ -828,19 +873,22 @@ namespace ATWeaponRef
 	}
 	
 
-	float GetWpnWeight(VMRefOrInventoryObj *thisObj)
+	BGSKeyword* GetCurMuzzle(VMRefOrInventoryObj *thisObj)
 	{
 		if (thisObj) {
 			TESObjectWEAP::InstanceData *instanceData = GetWeapRefInstanceData(thisObj);
 			if (instanceData) {
-				return instanceData->weight;
+				if (instanceData->keywords) {
+					for (UInt8 i = 0; i < instanceData->keywords->numKeywords; i++) {
+						if (instanceData->keywords->keywords[i]) {
+							
+						}
+					}
+				}
 			}
 		}
-		return 0.0;
+		return nullptr;
 	}
-
-
-
 
 
 }
@@ -876,16 +924,12 @@ void ATWeaponRef::RegisterFuncs(VirtualMachine* vm)
 	
 
 	vm->RegisterFunction(
-		new NativeFunction0 <VMRefOrInventoryObj, TESForm*>("GetCurCaliberMod", SCRIPTNAME, ATWeaponRef::GetCurCaliberMod, vm));
+		new NativeFunction0 <VMRefOrInventoryObj, BGSMod::Attachment::Mod*>("GetCurCaliberMod", SCRIPTNAME, ATWeaponRef::GetCurCaliberMod, vm));
 
 	vm->RegisterFunction(
 		new NativeFunction0 <VMRefOrInventoryObj, VMArray<TESAmmo*>>("GetAmmoList", SCRIPTNAME, ATWeaponRef::GetAmmoList, vm));
 	vm->RegisterFunction(
 		new NativeFunction0 <VMRefOrInventoryObj, VMArray<BGSKeyword*>>("GetWpnKeywords", SCRIPTNAME, ATWeaponRef::GetWpnKeywords, vm));
 
-	vm->RegisterFunction(
-		new NativeFunction0 <VMRefOrInventoryObj, float>("GetWpnWeight", SCRIPTNAME, ATWeaponRef::GetWpnWeight, vm));
 
-	
-	
 }

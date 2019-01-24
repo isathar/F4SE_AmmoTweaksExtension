@@ -3,12 +3,8 @@
 #include "f4se/GameObjects.h"
 #include "f4se/GameReferences.h"
 
-
-
 /********************************************/
 //	Class definitions, shared structs:
-
-
 
 
 /****************************************************************/
@@ -23,16 +19,20 @@ class ATAimModel : public BaseFormComponent
 public:
 	virtual			~ATAimModel();
 
-	// *cof* = spread/cone of fire, *rec* = recoil
+	// not sure about these first few...
+	// - they seem to be similar to TESForm's first few variables
+	// - using UInt32s to fill in the bytes before the actual AimModel variables start
 
 	UInt32			unk00;					//00
-	UInt32			unk04;					//08
-	UInt32			unk08;					//10
+	UInt32			unk08;					//08
+	UInt32			unk10;					//10
 
 	UInt32			formID;					//18 - gets set to 0 when any values are edited by omods or plugins
 
-	UInt32			unk10;					//20
-	UInt32			unk14;					//28
+	UInt32			unk20;					//20
+	UInt32			unk28;					//28
+
+	// *cof* = spread/cone of fire, *rec* = recoil:
 
 	float			CoF_MinAngle;			//30 - min. spread angle (crosshair size)
 	float			CoF_MaxAngle;			//38 - max. spread angle
@@ -55,7 +55,7 @@ public:
 
 // TESSpellList's unk08: 
 // - used by TESRace and TESActorBase for default abilities, TESNPC for an actor's current abilities
-// - structure is a lot like a tArray, but can't be cast to one
+// - structure is a lot like a tArray, but won't work as one
 
 //20
 class ATSpellListEntries
@@ -63,10 +63,11 @@ class ATSpellListEntries
 public:
 	SpellItem**			spells;		//00 - array of SpellItems
 	void*				unk08;		//08
-	void*				unk0C;		//10
-	UInt32				numSpells;	//18 - spells array length
+	void*				unk10;		//10
+	UInt32				numSpells;	//18 - length of spells - set manually
 };
 
+// container for ATSpellListEntries:
 
 // 10
 class ATTESSpellList : public BaseFormComponent
@@ -77,13 +78,10 @@ public:
 
 
 
-
 /******************************************/
 //		 custom definitions:
 
 // crit effect tables:
-
-
 
 class ATCritEffectTable
 {
@@ -105,14 +103,6 @@ public:
 };
 
 
-
-struct ATAmmoRecipeCompo
-{
-	BGSComponent *compo;
-	UInt32 compoCount;
-};
-
-
 // used similarly to an omod's DamageType modifiers + stores dt name for menus
 struct ATDamageType
 {
@@ -123,19 +113,7 @@ struct ATDamageType
 };
 
 
-
-struct ATFiremode
-{
-	std::string *firemodeID;
-	std::string *firemodeName;
-
-	tArray<BGSKeyword*> keywordsAdd;
-	tArray<BGSKeyword*> keywordsRemove;
-
-	float fRecoilMult, fCoFMult, fWearMult;
-};
-
-
+// stores a mod keyword and a multiplier used to modify max CND, wear, crit failure % with existing omods
 struct ATWeapVarMod
 {
 	BGSKeyword* modKW = nullptr;
@@ -143,7 +121,27 @@ struct ATWeapVarMod
 };
 
 
-// ammo subtypes - FMJ, JHP, etc.
+// for swappable objectmods
+struct ATWeaponModSwap
+{
+	BGSMod::Attachment::Mod *swapMod = nullptr;
+	BGSKeyword *swapKWReq = nullptr, *swapKWExclude = nullptr;
+
+
+	TESObjectMISC *GetModMiscItem()
+	{
+		if (swapMod) {
+			auto pair = g_modAttachmentMap->Find(&swapMod);
+			if (pair) {
+				return pair->miscObject;
+			}
+		}
+		return nullptr;
+	}
+};
+
+
+// stores an ammo subtype
 struct ATAmmoType
 {
 	// HUD name
@@ -159,7 +157,8 @@ struct ATAmmoType
 	UInt32 iArmorPenetration = 0, iNumProjectiles = 1;
 
 	// projectile variations for different attachments
-	UInt8 projectileStd = 0, projectileSup = 0, projectileExp = 0, projectileBrk = 0;
+	int projectileStd = 0, projectileSup = 0, projectileExp = 0, projectileBrk = 0;
+	int iImpactIndex = 0;
 
 	// sound detection levels (0=loud,1=normal,2=silent,3=very loud) - standard, suppressed, legendary explosive
 	UInt32 iSoundLevel = 0, iSoundLevelSup = 1, iSoundLevelExp = 3;
@@ -173,9 +172,6 @@ struct ATAmmoType
 
 	// ammo item
 	TESAmmo *ammoForm = nullptr;
-
-	// standard/explosive impactdataset
-	BGSImpactDataSet *projImpactData = nullptr, *projImpactDataExp = nullptr;
 
 	// additional damage types
 	tArray<ATDamageType> damageTypes;
@@ -200,46 +196,51 @@ class ATCaliber
 	tArray<BGSKeyword*> keywords;
 
 	tArray<BGSProjectile*> projectiles;
+	tArray<BGSImpactDataSet*> impacts;
 	tArray<EnchantmentItem*> critEffectTables;
 
 public:
 	std::string *caliberName;
-	BGSKeyword *caliberKW;
+	
+	BGSKeyword *kwCaliberID, *kwCaliberID_AWKCR;
 
-	TESForm *caliberMod;
+	BGSMod::Attachment::Mod *caliberMod;
 
 	tArray<ATAmmoType> ammoTypes;
 
 	TESObjectMISC *casingItem;
 
 
-	// defined in ATConfig.cpp
+	// defined in ATConfig.cpp:
+
+	// reads + saves variables from ini files
 	bool FillFromIni(const char* caliberFileName);
 	
-	// defined in ATWeaponRef.cpp
+	// defined in ATWeaponRef.cpp:
+
+	// used to modify a weapon instance's stats
 	UInt32 ProcessInstanceData(TESObjectWEAP::InstanceData *instanceData, int ammoTypeIndex);
 
 };
 
 
-
+// holds a weapon's stats and stat modifiers
 class ATWeapon
 {
 
 public:
 	UInt32 weaponFormID;
+	tArray<ATWeapVarMod> MaxCNDMods, WearMods;
+	UInt32 MaxCNDBase, HUDIconIndex, HUDIconIndexAlt;
 
-	tArray<ATWeapVarMod> MaxCNDMods;
-	tArray<ATWeapVarMod> WearMods;
+	tArray<ATWeaponModSwap> MuzzleMods, ScopeMods, DamagedMods;
 
-	UInt32 MaxCNDBase;
-	UInt32 HUDIconIndex, HUDIconIndexAlt;
+	// defined in ATConfig.cpp:
 
-
-	// defined in ATConfig.cpp
 	bool FillFromIni(const char* weaponFileName, const char* weaponID);
 
 	// defined in ATWeaponRef.cpp:
+
 	float GetMaxCNDMult(TESObjectWEAP::InstanceData *instanceData);
 	float GetWearMult(TESObjectWEAP::InstanceData *instanceData);
 
@@ -247,19 +248,34 @@ public:
 };
 
 
-
-// misc shared forms and text
+// stores forms and text used throughout the plugin
 class ATSharedData
 {
 public:
+	// shared directory/section text:
+
+	const char* configPath_Base = ".\\Data\\F4SE\\Plugins\\AmmoTweaks\\";
+
+	const char* configPath_MainINI = ".\\Data\\F4SE\\Plugins\\AmmoTweaks\\AmmoTweaks.ini";
+
+	const char* configPath_Weapons = ".\\Data\\F4SE\\Plugins\\AmmoTweaks\\Weapons\\";
+	const char* configPath_WeapIndex = ".\\Data\\F4SE\\Plugins\\AmmoTweaks\\Weapons\\Index_";
+	const char *configCategories_Weap[5] = { "Guns", "EnergyGuns", "Heavy", "FollowerGuns", "FollowerEnergyGuns" };
+
+	const char* configPath_Ammo = ".\\Data\\F4SE\\Plugins\\AmmoTweaks\\Ammo\\";
+	const char* configPath_AmmoIndex = ".\\Data\\F4SE\\Plugins\\AmmoTweaks\\Ammo\\Index_";
+
+	const char* configPath_Firemodes = ".\\Data\\F4SE\\Plugins\\AmmoTweaks\\Firemodes\\";
+
+
+	bool bEditAmmoNames = false;
+
 	bool bNPCsUseAmmo = false;
 	bool bNPCsUseAmmo_Thrown = false;
 	bool bNPCsUseAmmo_Turret = false;
 
 	bool bUseSingleFireAutoSounds = false;
-
 	bool bDisableRecoilSpringForce = false;
-
 	bool bTwoShotLegendaryTweak = false;
 
 	bool bEnableSkillRequirements = false;
@@ -267,27 +283,33 @@ public:
 	float fSkillReq_MinReq = 2.0;
 	float fSkillReq_MaxReq = 12.0;
 
-	// frequently used kws and avs:
-	
-	BGSKeyword *suppressorKW;
-	BGSKeyword *muzBrakeKW;
-	BGSKeyword *compensatorKW;
-	BGSKeyword *legendaryExplKW;
-	BGSKeyword *legendaryTwoShotKW;
+	// frequently used keywords and actor values:
 
-	BGSKeyword *soundKW_Automatic;
-	BGSKeyword *soundKW_AutomaticDisable;
-	BGSKeyword *soundKW_Silenced;
-	BGSKeyword *soundKW_SilencedDisable;
+	//dn_HasMuzzle_Suppressor
+	UInt32 kwMuzSuppressor = 0x0016304E;
+	// dn_HasMuzzle_Brake
+	UInt32 kwMuzBrake = 0x0016304D;
+	// dn_HasMuzzle_Compensator
+	UInt32 kwMuzCompensator = 0x0016304C;
 
-	ActorValueInfo *ArmorPenetrationAV;
-	ActorValueInfo *MaxConditionAV;
-	ActorValueInfo *WearPerShotAV;
-	ActorValueInfo *SkillReqAV;
+	// dn_HasMuzzleBeamSplitter
+	UInt32 kwMuzSplitter = 0x000D70BB;
+	// dn_HasMuzzleCamera
+	UInt32 kwMuzCamera = 0x000D70BD;
+	// dn_HasMuzzleFocuser
+	UInt32 kwMuzFocuser = 0x000D70BC;
 
-	ActorValueInfo *HUDIconAV_Weapon;
-	ActorValueInfo *HasInstanceAV;
+	// dn_HasLegendary_ExplosiveBullets
+	UInt32 kwLegExplosive = 0x001E73BC;
+	// dn_HasLegendary_TwoShot
+	UInt32 kwLegTwoShot = 0x001CF587;
 
+	BGSKeyword *kwMuzAmplifier;
+	BGSKeyword *kwSoundAuto, *kwSoundAutoDisabled, *kwSoundSilenced, *kwSoundSilencedDisabled;
+
+	ActorValueInfo *avArmorPenetration, *avMaxCondition, *avWearPerShot, *avSkillReq;
+	ActorValueInfo *avHUDIcon_Weapon, *avHUDIcon_Ammo, *avHUDIcon_FireMode;
+	ActorValueInfo *avHasInstance, *avCriticalChance;
 
 	// weapon + caliber ID index for load order independence:
 
@@ -299,7 +321,7 @@ public:
 	tArray<ATWeapon*> g_ATWeapons;
 	tArray<ATCaliber*> g_ATCalibers;
 
-
-
 	UInt8 numProcessedWeaps;
+
+
 };

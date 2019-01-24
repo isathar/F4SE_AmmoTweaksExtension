@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
       <Configuration>Debug</Configuration>
@@ -29,6 +29,7 @@
     <ClCompile Include="..\f4se\f4se\GameTypes.cpp" />
     <ClCompile Include="..\f4se\f4se\GameUtilities.cpp" />
     <ClCompile Include="..\f4se\f4se\PapyrusArgs.cpp" />
+    <ClCompile Include="..\f4se\f4se\PapyrusObjects.cpp" />
     <ClCompile Include="..\f4se\f4se\PapyrusEvents.cpp" />
     <ClCompile Include="..\f4se\f4se\PapyrusInterfaces.cpp" />
     <ClCompile Include="..\f4se\f4se\PapyrusNativeFunctions.cpp" />
@@ -38,10 +39,10 @@
     <ClCompile Include="..\f4se\f4se\PapyrusValue.cpp" />
     <ClCompile Include="..\f4se\f4se\PapyrusVM.cpp" />
     <ClCompile Include="ATShared.cpp" />
-    <ClCompile Include="ATConfig.cpp" />
+    <ClCompile Include="ATConfigLoad.cpp" />
+    <ClCompile Include="ATConfigSave.cpp" />
     <ClCompile Include="ATWeaponRef.cpp" />
     <ClCompile Include="ATNPCTweaks.cpp" />
-	<ClCompile Include="ATInstanceData.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -49,6 +50,8 @@
     <ClInclude Include="..\common\IDataStream.h" />
     <ClInclude Include="..\common\IFileStream.h" />
     <ClInclude Include="..\common\IDebugLog.h" />
+    <ClInclude Include="..\common\Utilities.h" />
+    <ClInclude Include="..\f4se_common\f4se_version.h" />
     <ClInclude Include="..\f4se\f4se_common\Relocation.h" />
     <ClInclude Include="..\f4se\f4se\GameAPI.h" />
     <ClInclude Include="..\f4se\f4se\GameData.h" />
@@ -66,6 +69,7 @@
     <ClInclude Include="..\f4se\f4se\PapyrusEvents.h" />
     <ClInclude Include="..\f4se\f4se\PapyrusInterfaces.h" />
     <ClInclude Include="..\f4se\f4se\PapyrusNativeFunctions.h" />
+    <ClInclude Include="..\f4se\f4se\PapyrusObjects.h" />
     <ClInclude Include="..\f4se\f4se\PapyrusInstanceData.h" />
     <ClInclude Include="..\f4se\f4se\PapyrusStruct.h" />
     <ClInclude Include="..\f4se\f4se\PapyrusUtilities.h" />
@@ -75,10 +79,10 @@
     <ClInclude Include="Config.h" />
     <ClInclude Include="ATDefinitions.h" />
     <ClInclude Include="ATShared.h" />
-    <ClInclude Include="ATConfig.h" />
+    <ClInclude Include="ATConfigLoad.h" />
+    <ClInclude Include="ATConfigSave.h" />
     <ClInclude Include="ATWeaponRef.h" />
     <ClInclude Include="ATNPCTweaks.h" />
-	<ClInclude Include="ATInstanceData.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\f4se\f4se\PapyrusEventsDef.inl" />
@@ -90,20 +94,20 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{A698FA2E-50D2-4898-B15E-8B14E710D9C4}</ProjectGuid>
     <RootNamespace>AmmoTweaks</RootNamespace>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
     <ProjectName>AmmoTweaks</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>

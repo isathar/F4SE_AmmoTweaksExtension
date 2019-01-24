@@ -2,30 +2,13 @@ F4SE AmmoTweaks Extension
 =========================
 
 
-WIP plugin and script source files adding the ability to influence Fallout 4 weapons' AimModels and ImpactDataSets via Papyrus scripting.
+WIP plugin with some extra InstanceData-related functions for AmmoTweaks.
 
 
-------------------------------------------------------------------------------------------------------- 
+Notes for compiling:
 
-
-Warning: This is a work in progress and my C++ knowledge is pretty rudimentary. I probably wouldn't consider this stable or clean, but I guess it works so far. Some workarounds were involved in getting this to compile since I'm using VS2015.
-
-
--------------------------------------------------------------------------------------------------------
-
-
-Additional Compiling Instructions:
-
-
-- The AmmoTweaks folder needs to be with the F4SE source files to compile (src\f4se\)
-
--- It's probably best to copy F4SE's source files (along with the included source) to another directory to keep the base source files clean.
-
-
-- Once it's loaded in Visual Studio, you'll need to add "$(SolutionDir)\\..\\.." (that's "$(SolutionDir)\..\.." if you're reading this in a text editor) to the f4se_common_vc14 project's 'Additional Include Directories' (found in the project's properties under 'C/C++ \ General' )
-
--- This is required to get the static library for f4se_common_vc14 to compile.
-
+- The Plugin\src\AmmoTweaks folder needs to be with the F4SE source files to compile ((Fallout 4 directory)\src\)
+- Made with Visual Studio 2015/2017 (should work with 2017, not sure about backwards compatibility with 2015)
 
 --------------------------------------------------------------------------------------------------------
 

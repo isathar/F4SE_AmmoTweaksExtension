@@ -52,13 +52,11 @@ namespace NPCTweaks
 					ATConfig::SaveGameDataToINI();
 					
 				}
-				else
-					ATConfig::LoadGameDataFromINI();
 
 
 				_MESSAGE("\nSpellData: 0x%X", *spellData);
-				_MESSAGE("      count  (0C)=  0x%08X", iNumSpells);
-				_MESSAGE("      spells (00)=  0x%08X", spellData->spells);
+				_MESSAGE("      count  =  0x%08X", iNumSpells);
+				_MESSAGE("      spells =  0x%08X", spellData->spells);
 				SpellItem *tempSpellX = nullptr;
 				for (UInt32 i = 0; i < iNumSpells; i++) {
 					tempSpellX = (spellData->spells[i]);

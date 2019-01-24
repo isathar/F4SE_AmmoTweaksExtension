@@ -14,7 +14,6 @@ namespace ATShared
 bool ATShared::RegisterPapyrus(VirtualMachine * vm)
 {
 	SharedData = new ATSharedData();
-	ATInstanceData::RegisterPapyrus(vm);
 	ATWeaponRef::RegisterPapyrus(vm);
 	ATNPCTweaks::RegisterPapyrus(vm);
 	return true;

@@ -3,27 +3,6 @@ scriptname AmmoTweaks:Weapon:WeaponReference extends AmmoTweaks:Weapon:WeaponRef
 
 
 Group WeaponConfig
-	int Property iWeapType = 0 auto const
-	{0=gun, 1=melee, 2=thrown}
-	
-	WeaponModInfo[] Property pMuzzles = none auto const
-	{swappable muzzles}
-	WeaponModInfo[] Property pScopes = none auto const
-	{swappable scopes}
-	WeaponModInfo[] Property pBarrelAttachments = none auto const
-	{swappable custom bayonets/grenade launchers, etc.}
-	
-	
-	WeaponModInfo[] Property pDamagedMods1 = none auto const
-	{damaged mods - group 1 (default: receiver/capacitor, blade)}
-	WeaponModInfo[] Property pDamagedMods2 = none auto const
-	{damaged mods - group 2 (default: barrel, melee grip)}
-	WeaponModInfo[] Property pDamagedMods3 = none auto const
-	{damaged mods - group 3 (default: gun grip/stock)}
-	WeaponModInfo[] Property pDamagedMods4 = none auto const
-	{damaged mods - group 4 (default: magazine)}
-	
-	
 	GlobalVariable Property	at_glob_Setting_CND_MinStartingPercentage auto const mandatory
 	{global for the minimum CND percentage any weapon can start with}
 	
@@ -43,8 +22,6 @@ EndGroup
 
 ; current CND values
 float 		fCurCND = 				-1.0
-float 		fMaxCND = 				1.0
-float 		fCNDPerShot = 			1.0
 
 Ammo[] 		CurAmmoItems = none
 
@@ -59,11 +36,38 @@ int iAmmoTypeIndex = -1
 
 bool bInitialized = false
 
+bool bReEquipping = false
 
+
+
+Event OnInit()
+	if !bInitialized
+		ObjectReference curContainer = GetContainer()
+		if (curContainer != none)
+			Drop(true)
+			curContainer.AddItem(self)
+		endIf
+	endIf
+EndEvent
+
+Event OnLoad()
+	if !bInitialized
+		bInitialized = true
+		InitInstance()
+	endIf
+EndEvent
 
 ; initializes the weapon ref's InstanceData modifiers
 Function InitInstance()
+	CurAmmoItems = new Ammo[0]
+	RegisterForRemoteEvent(Game.GetPlayer(), "OnPlayerLoadGame")
+	
+	CheckWeaponInstance(true)
+	GoToState("WeapReadyState")
 EndFunction
+
+
+
 
  ; re-initializes instance edits when the game is reloaded
 Event Actor.OnPlayerLoadGame(Actor akSender)
@@ -88,11 +92,11 @@ EndFunction
 
 
 float Function GetSavedMaxCondition()
-	return fMaxCND
+	return (GetMaxCND() as float)
 EndFunction
 
 float Function GetSavedCNDPerShot()
-	return fCNDPerShot
+	return CalcWearPerShot()
 EndFunction
 
 
@@ -109,10 +113,8 @@ bool Function CheckWeaponInstance(bool bIsNew=false)
 	if bForceUpdate
 		UpdateWeaponInstance()
 		
-		fCNDPerShot = CalcWearPerShot()
-		
-		fMaxCND = GetMaxCND() as float
 		if bIsNew
+			float fMaxCND = GetMaxCND() as float
 			fCurCND = ( \
 				fMaxCND * Utility.RandomFloat(at_glob_Setting_CND_MinStartingPercentage.GetValue(), 1.0) \
 			)
@@ -131,9 +133,6 @@ Function ResetWeaponInstance()
 		debug.notification("Update failed")
 	endIf
 	
-	fCNDPerShot = CalcWearPerShot()
-	fMaxCND = GetMaxCND() as float
-	
 	if iAmmoTypeIndex > -1
 		CurAmmoItems = GetAmmoList()
 		debug.notification("Ammo " + iAmmoTypeIndex + " = " + CurAmmoItems[iAmmoTypeIndex].GetFormID())
@@ -141,7 +140,7 @@ Function ResetWeaponInstance()
 		CurAmmoItems = new Ammo[0]
 		debug.notification("Ammo " + iAmmoTypeIndex + " = none")
 	endIf
-	LogWeaponStats(iWeapType)
+	LogWeaponStats(0)
 EndFunction
 
 
@@ -150,7 +149,7 @@ Function UpdateWeaponInstance()
 	if (iAmmoTypeIndex < 0)
 		iAmmoTypeIndex = GetCurAmmoType(CurCaliberKW)
 	endIf
-	ResetStatsMod = GetCurCaliberMod() as ObjectMod
+	ResetStatsMod = GetCurCaliberMod()
 	if ResetStatsMod != none
 		WeaponAttachMod(ResetStatsMod)
 	endIf
@@ -163,6 +162,14 @@ EndFunction
 
 
 
+Function UpdateHUDInfo()
+	
+	if (CurAmmoItems.length > 0)
+		
+	endIf
+EndFunction
+
+
 ; ammo swapping event
 Event AmmoTweaks:ATEventManager.PlayerSwapAmmoEvent(AmmoTweaks:ATEventManager akSender, Var[] args)
 EndEvent
@@ -171,41 +178,11 @@ EndEvent
 
 ; uninitialized state
 auto state WeapInitState
-	Event OnBeginState(string asNewState)
-		if !bInitialized
-			debug.notification("WeapInitState: " + GetFormID())
-			;utility.WaitMenuMode(3.0)
-			;ObjectReference curContainer = GetContainer()
-			;if (curContainer != none)
-			;	Drop(true)
-			;	curContainer.AddItem(self)
-			;endIf
-			;WeaponAttachMod(ResetStatsMod)
-		endIf
-	EndEvent
-	
-	Event OnLoad()
-		if !bInitialized
-			InitInstance()
-		endIf
-		GoToState("WeapReadyState")
-	EndEvent
-	
-	; initializes the weapon ref's InstanceData modifiers
-	Function InitInstance()
-		CurAmmoItems = new Ammo[0]
-		RegisterForRemoteEvent(Game.GetPlayer(), "OnPlayerLoadGame")
-		
-		CheckWeaponInstance(true)
-		
-	EndFunction
-	
-	
 	; attaches a mod to this weapon reference
 	Function WeaponAttachMod(ObjectMod tempMod)
 		if tempMod != none
 			AttachMod(tempMod)
-			utility.waitmenumode(0.0167)
+			;utility.waitmenumode(0.0167)
 			ResetWeaponInstance()
 		endIf
 	EndFunction
@@ -215,7 +192,7 @@ auto state WeapInitState
 		if (curContainer != none)
 			curContainer.UnequipItem(self.GetBaseObject(), false, true)
 			Drop(true)
-			utility.waitmenumode(0.0167)
+			;utility.waitmenumode(0.0167)
 			curContainer.AddItem(self)
 		endIf
 	EndEvent
@@ -244,7 +221,7 @@ state WeapReadyState
 	Function WeaponAttachMod(ObjectMod tempMod)
 		if tempMod != none
 			AttachMod(tempMod)
-			utility.waitmenumode(0.0167)
+			;utility.waitmenumode(0.0167)
 			ResetWeaponInstance()
 		endIf	
 	EndFunction
@@ -255,12 +232,18 @@ endState
 state PlayerEquippedState
 	Event OnBeginState(string asNewState)
 		debug.notification("PlayerEquippedState: " + GetFormID())
-		RegisterForCustomEvent(at_AmmoTweaksEventManager, "PlayerSwapAmmoEvent")
+		if (!bReEquipping)
+			RegisterForCustomEvent(at_AmmoTweaksEventManager, "PlayerSwapAmmoEvent")
+		endIf
+		bReEquipping = false
+		UpdateHUDInfo()
 	EndEvent
 	
 	
 	Event OnUnequipped(Actor akActor)
-		GoToState("WeapReadyState")
+		if (!bReEquipping)
+			GoToState("WeapReadyState")
+		endIf
 	EndEvent
 	
 	Event OnEndState(string asNewState)
@@ -272,18 +255,21 @@ state PlayerEquippedState
 	Function WeaponAttachMod(ObjectMod tempMod)
 		if tempMod != none
 			Actor tempActor = CurrentHolder
+			bReEquipping = true
 			
 			if CurrentHolder != none
 				CurrentHolder.UnequipItem(GetBaseObject(), false, true)
 			endIf
 			AttachMod(tempMod)
 			; min 1 frame delay
-			utility.waitmenumode(0.0167)
+			;utility.waitmenumode(0.0167)
 			ResetWeaponInstance()
 			
 			if tempActor != none
 				tempActor.EquipItem(GetBaseObject(), false, true)
 			endIf
+			
+			bReEquipping = false
 		endIf	
 	EndFunction
 	
@@ -331,8 +317,32 @@ state NPCEquippedState
 	EndEvent
 	
 	Event OnUnequipped(Actor akActor)
-		GoToState("WeapReadyState")
+		if (!bReEquipping)
+			GoToState("WeapReadyState")
+		endIf
 	EndEvent
+	
+	; attaches a mod to this weapon reference
+	Function WeaponAttachMod(ObjectMod tempMod)
+		if tempMod != none
+			Actor tempActor = CurrentHolder
+			bReEquipping = true
+			
+			if CurrentHolder != none
+				CurrentHolder.UnequipItem(GetBaseObject(), false, true)
+			endIf
+			AttachMod(tempMod)
+			; min 1 frame delay
+			;utility.waitmenumode(0.0167)
+			ResetWeaponInstance()
+			
+			if tempActor != none
+				tempActor.EquipItem(GetBaseObject(), false, true)
+			endIf
+			
+			bReEquipping = false
+		endIf	
+	EndFunction
 	
 	Event OnEndState(string asNewState)
 		CurrentHolder = none
