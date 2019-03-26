@@ -1,24 +1,12 @@
-#include "f4se/GameData.h"
-#include "f4se/GameExtraData.h"
-#include "f4se/GameRTTI.h"
-#include <string>
-
 #include "ATShared.h"
 
 
-namespace ATShared
-{
-	ATSharedData *SharedData = nullptr;
-}
 
 bool ATShared::RegisterPapyrus(VirtualMachine * vm)
 {
-	SharedData = new ATSharedData();
 	ATWeaponRef::RegisterPapyrus(vm);
-	ATNPCTweaks::RegisterPapyrus(vm);
 	return true;
 }
-
 
 
 const char* ATShared::GetPluginNameFromFormID(UInt32 formID)
@@ -121,78 +109,13 @@ TESForm * ATShared::GetFormFromIdentifier(const std::string & formIdentifier, co
 }
 
 
-
-TESObjectWEAP::InstanceData * ATShared::GetInstanceData_WeapRef(TESForm* form)
+namespace ATShared
 {
-	
-	TESObjectWEAP::InstanceData * weapInstanceData = nullptr;
-	ExtraDataList * extraDataList = nullptr;
-	TBO_InstanceData * instanceData = nullptr;
-	ExtraInstanceData * objectModData = nullptr;
+	tArray<UInt32> index_Weapons;
+	tArray<UInt32> index_Calibers;
 
-	TESObjectREFR *refr = DYNAMIC_CAST(form, TESForm, TESObjectREFR);
+	tArray<ATCaliber> ATCalibers;
+	tArray<ATWeapon> ATWeapons;
 
-	if (refr)
-		extraDataList = refr->extraDataList;
-
-	if (extraDataList) {
-		BSExtraData * extraData = extraDataList->GetByType(ExtraDataType::kExtraData_InstanceData);
-		if (extraData) {
-			objectModData = DYNAMIC_CAST(extraData, BSExtraData, ExtraInstanceData);
-			if (objectModData) {
-				weapInstanceData = (TESObjectWEAP::InstanceData*)Runtime_DynamicCast(objectModData->instanceData, RTTI_TBO_InstanceData, RTTI_TESObjectWEAP__InstanceData);
-			}
-		}
-		else {
-			TESBoundObject * boundObject = DYNAMIC_CAST(form, TESForm, TESBoundObject);
-
-			if (boundObject) {
-				instanceData = boundObject->CloneInstanceData(nullptr);
-				if (instanceData) {
-					objectModData = ExtraInstanceData::Create(form, instanceData);
-					if (objectModData) {
-						extraDataList->Add(ExtraDataType::kExtraData_InstanceData, objectModData);
-						weapInstanceData = (TESObjectWEAP::InstanceData*)Runtime_DynamicCast(objectModData->instanceData, RTTI_TBO_InstanceData, RTTI_TESObjectWEAP__InstanceData);
-					}
-				}
-			}
-		}
-	}
-	return weapInstanceData;
+	tArray<ATCritEffectTable> ATCritEffectTables;
 }
-
-TESObjectWEAP::InstanceData * ATShared::GetInstanceData_WeapForm(TESObjectWEAP* weapon)
-{
-	TESObjectWEAP::InstanceData * weapInstanceData = nullptr;
-	if (weapon)
-		weapInstanceData = &weapon->weapData;
-	return weapInstanceData;
-}
-
-TESObjectWEAP::InstanceData * ATShared::GetInstanceData_WeapEquipped(Actor* actor, UInt32 iSlotIndex)
-{
-	TESObjectWEAP::InstanceData * weapInstanceData = nullptr;
-	
-	if (iSlotIndex == 41) {
-		ActorEquipData * equipData = actor->equipData;
-		if (equipData) {
-			// Make sure there is an item in this slot
-			 TESForm* item = equipData->slots[iSlotIndex].item;
-			 if (item)
-				 weapInstanceData = (TESObjectWEAP::InstanceData*)Runtime_DynamicCast(equipData->slots[iSlotIndex].instanceData, RTTI_TBO_InstanceData, RTTI_TESObjectWEAP__InstanceData);
-			 else
-				 _MESSAGE("no item");
-		}
-		else
-			_MESSAGE("no equipData");
-	}
-	else
-		_MESSAGE("wrong index");
-
-	return weapInstanceData;
-}
-
-
-
-
-

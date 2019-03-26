@@ -1,6 +1,5 @@
 #include <shlobj.h>
 #include "f4se/PluginAPI.h"
-
 #include "Config.h"
 #include "ATShared.h"
 
@@ -11,32 +10,14 @@ F4SEPapyrusInterface	*g_papyrus   =		NULL;
 F4SEMessagingInterface	*g_messaging =		NULL;
 
 
-
 void F4SEMessageHandler(F4SEMessagingInterface::Message* msg)
 {
-	switch (msg->type)
-	{
-		case F4SEMessagingInterface::kMessage_GameDataReady:
-			{
-			if ((bool)msg->data) {
-				_MESSAGE("Game Data ready - loading modifications...");
-				ATConfig::EditGameData();
-			}
-			}
-			break;
-		case F4SEMessagingInterface::kMessage_PostLoadGame:
-			{
-				
-			}
-			break;
-		case F4SEMessagingInterface::kMessage_PostSaveGame:
-			{
-				_MESSAGE("Game saved - %s : %x", msg->sender, msg->data);
-			}
-			break;
+	if (msg->type == F4SEMessagingInterface::kMessage_GameDataReady) {
+		if ((UInt32)msg->data == 0x1) {
+			ATConfig::EditGameData();
+		}
 	}
 }
-
 
 
 extern "C"
@@ -45,9 +26,6 @@ extern "C"
 bool F4SEPlugin_Query(const F4SEInterface * f4se, PluginInfo * info)
 {
 	gLog.OpenRelative(CSIDL_MYDOCUMENTS, "\\My Games\\Fallout4\\F4SE\\AmmoTweaks.log");
-
-	_MESSAGE("initializing %s v%s...", PLUGIN_NAME_SHORT, PLUGIN_VERSION_STRING);
-
 
 	info->infoVersion = PluginInfo::kInfoVersion;
 	info->name =		PLUGIN_NAME_SHORT;
@@ -69,7 +47,6 @@ bool F4SEPlugin_Query(const F4SEInterface * f4se, PluginInfo * info)
 
 	return true;
 }
-
 
 bool F4SEPlugin_Load(const F4SEInterface *f4se)
 {
