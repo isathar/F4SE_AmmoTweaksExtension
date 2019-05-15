@@ -99,9 +99,6 @@
     <ClInclude Include="..\f4se\f4se_common\Relocation.h">
       <Filter>Resource Files\F4SEHeaders</Filter>
     </ClInclude>
-    <ClInclude Include="ATWeaponRef.h">
-      <Filter>Plugin Files\Header</Filter>
-    </ClInclude>
     <ClInclude Include="Config.h">
       <Filter>Plugin Files\Header</Filter>
     </ClInclude>
@@ -126,7 +123,19 @@
     <ClInclude Include="..\f4se\f4se\PapyrusObjects.h">
       <Filter>Resource Files\F4SEHeaders</Filter>
     </ClInclude>
-    <ClInclude Include="ATConfig.h">
+    <ClInclude Include="..\f4se\f4se_common\Utilities.h">
+      <Filter>Resource Files\F4SEHeaders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\f4se\f4se\GameInput.h">
+      <Filter>Resource Files\F4SEHeaders</Filter>
+    </ClInclude>
+    <ClInclude Include="ATPapyrusWeaponRef.h">
+      <Filter>Plugin Files\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="ATPapyrusGlobals.h">
+      <Filter>Plugin Files\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="ATConfigLoader.h">
       <Filter>Plugin Files\Header</Filter>
     </ClInclude>
   </ItemGroup>
@@ -203,9 +212,6 @@
     <ClCompile Include="..\f4se\f4se_common\Relocation.cpp">
       <Filter>Resource Files\F4SESource</Filter>
     </ClCompile>
-    <ClCompile Include="ATWeaponRef.cpp">
-      <Filter>Plugin Files\Source</Filter>
-    </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Plugin Files\Source</Filter>
     </ClCompile>
@@ -221,7 +227,16 @@
     <ClCompile Include="..\f4se\f4se\PapyrusObjects.cpp">
       <Filter>Resource Files\F4SESource</Filter>
     </ClCompile>
-    <ClCompile Include="ATConfig.cpp">
+    <ClCompile Include="..\f4se\f4se\GameInput.cpp">
+      <Filter>Resource Files\F4SESource</Filter>
+    </ClCompile>
+    <ClCompile Include="ATPapyrusWeaponRef.cpp">
+      <Filter>Plugin Files\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="ATPapyrusGlobals.cpp">
+      <Filter>Plugin Files\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="ATConfigLoader.cpp">
       <Filter>Plugin Files\Source</Filter>
     </ClCompile>
   </ItemGroup>

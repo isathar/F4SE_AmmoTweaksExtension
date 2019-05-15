@@ -13,8 +13,9 @@ F4SEMessagingInterface	*g_messaging =		NULL;
 void F4SEMessageHandler(F4SEMessagingInterface::Message* msg)
 {
 	if (msg->type == F4SEMessagingInterface::kMessage_GameDataReady) {
-		if ((UInt32)msg->data == 0x1) {
-			ATConfig::EditGameData();
+		if (msg->data == (void*)true) {
+			// load extra data from config files
+			ATConfig::LoadGameData();
 		}
 	}
 }
@@ -30,6 +31,11 @@ bool F4SEPlugin_Query(const F4SEInterface * f4se, PluginInfo * info)
 	info->infoVersion = PluginInfo::kInfoVersion;
 	info->name =		PLUGIN_NAME_SHORT;
 	info->version =		PLUGIN_VERSION;
+	
+	if (f4se->runtimeVersion != RUNTIME_VERSION_1_10_130) {
+		_MESSAGE("Aborting - Game version mismatch");
+		return false;
+	}
 	
 	g_pluginHandle =	f4se->GetPluginHandle();
 
@@ -56,7 +62,7 @@ bool F4SEPlugin_Load(const F4SEInterface *f4se)
 	if (g_papyrus)
 		g_papyrus->Register(ATShared::RegisterPapyrus);
 	
-	_MESSAGE("%s v%s loaded", PLUGIN_NAME_SHORT, PLUGIN_VERSION_STRING);
+	_MESSAGE("%s v%s is loading...", PLUGIN_NAME_SHORT, PLUGIN_VERSION_STRING);
 	
     return true;
 }
