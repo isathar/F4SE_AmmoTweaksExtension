@@ -12,3 +12,5 @@ Notes for compiling:
 
 
 - Uses SimpleINI (https://github.com/brofield/simpleini) for config file read operations
+- Uses code based on xoroshiro128+ (http://xoshiro.di.unimi.it/xoroshiro128plus.c) for random number generation
+
