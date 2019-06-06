@@ -1,523 +1,355 @@
 #include "ATConfigLoader.h"
-#include <time.h>
+#include "SimpleIni/SimpleIni.h"
+#include <string>
+#include <chrono>
 
 
-// ----------------------- ATCaliber:
 
-// loads a caliber's data from the given ini file path
-bool ATCaliber::ReadIni(const char* configFileName)
+// loads a weapon's caliber slots data from ini
+bool ATCaliber::ReadIni(const char * configFileName)
 {
-	bool bRetVal = false;
-	CSimpleIniA iniAmmo;
-	iniAmmo.SetUnicode();
-	iniAmmo.SetMultiKey(true);
+	CSimpleIniA iniCalibers;
+	iniCalibers.SetUnicode();
+	iniCalibers.SetMultiKey(true);
 
-	if (iniAmmo.LoadFile(configFileName) > -1) {
-		configPath = BSFixedString(configFileName);
+	if (iniCalibers.LoadFile(configFileName) > -1) {
+		const char *keyID = "", *ammoSection = "", *projSection = "";
 
-		// caliber keyword
-		const char *keyID = iniAmmo.GetValue("Caliber", "sCaliberID", "none");
-		objectID = ATShared::GetFormIDFromIdentifier(keyID);
+		// ---- HUD/Menu Name
+		hudName = iniCalibers.GetValue("Caliber", "sName", "none");
 
-		hudName = iniAmmo.GetValue("Caliber", "sName", "none");
+		// ---- ID/Recipe Keywords
+		keyID = iniCalibers.GetValue("Caliber", "sCaliberID", "none");
+		objectID = ATUtilities::GetFormIDFromIdentifier(keyID);
+		keyID = iniCalibers.GetValue("Caliber", "sRecipeID", "none");
+		recipeKW = (BGSKeyword*)ATUtilities::GetFormFromIdentifier(keyID);
 
-		// ammo subtypes:
-		CSimpleIni::TNamesDepend values, valuesProj;
-		if (iniAmmo.GetAllValues("Caliber", "sAmmoTypes", values)) {
-			int ammoTypeCount = values.size();
-			CSimpleIni::TNamesDepend::const_iterator i = values.begin();
-			for (; i != values.end(); ++i) {
-				const char *ammoSection = i->pItem;
-				// ammo item
-				keyID = iniAmmo.GetValue(ammoSection, "sAmmoID", "none");
-				TESForm *tempAmmo = (TESForm*)ATShared::GetFormFromIdentifier(keyID);
+		// ---- Ammo Swapping Animations/Event
+		keyID = iniCalibers.GetValue("Caliber", "sAmmoSwapIdle_1P", "none");
+		swapIdle_1P = (TESForm*)ATUtilities::GetFormFromIdentifier(keyID);
+		keyID = iniCalibers.GetValue("Caliber", "sAmmoSwapIdle_3P", "none");
+		swapIdle_3P = (TESForm*)ATUtilities::GetFormFromIdentifier(keyID);
+		swapAnimEventName = BSFixedString(iniCalibers.GetValue("Caliber", "sAmmoSwapAnimEvent", ""));
 
-				// ObjectMod
-				keyID = iniAmmo.GetValue(ammoSection, "sModID", "none");
-				BGSMod::Attachment::Mod *tempMod = (BGSMod::Attachment::Mod*)ATShared::GetFormFromIdentifier(keyID);
+		// ---- Ammo Subtypes
+		CSimpleIni::TNamesDepend ammoValues, projValues;
+		if (iniCalibers.GetAllValues("Caliber", "sAmmoTypes", ammoValues)) {
+			CSimpleIni::TNamesDepend::const_iterator j = ammoValues.begin();
+			for (; j != ammoValues.end(); ++j) {
+				ATCaliber::AmmoType newAmmoType;
+				ammoSection = j->pItem;
 
-				// make sure the ammo form + mod exist
-				if (tempAmmo && tempMod) {
-					AmmoType newType;
+				// ---- HUD/Menu Name
+				newAmmoType.hudName = iniCalibers.GetValue(ammoSection, "sName", "none");
 
-					newType.modItem = tempAmmo;
-					newType.swapMod = tempMod;
+				// ---- Ammo Item
+				keyID = iniCalibers.GetValue(ammoSection, "sAmmoID", "none");
+				newAmmoType.ammoItem = (TESAmmo*)ATUtilities::GetFormFromIdentifier(keyID);
 					
-					// casing item
-					keyID = iniAmmo.GetValue(ammoSection, "sCasingID", "none");
-					newType.casingItem = (TESObjectMISC*)ATShared::GetFormFromIdentifier(keyID);
+				// ---- Ammo Mod
+				keyID = iniCalibers.GetValue(ammoSection, "sModID", "none");
+				newAmmoType.ammoMod = (BGSMod::Attachment::Mod*)ATUtilities::GetFormFromIdentifier(keyID);
 
-					// projectiles
-					if (iniAmmo.GetAllValues(ammoSection, "sProjectiles", valuesProj)) {
-						CSimpleIni::TNamesDepend::const_iterator j = valuesProj.begin();
-						for (; j != valuesProj.end(); ++j) {
-							const char *projSection = j->pItem;
-							ProjectileOverride tempProjOverride;
+				if (newAmmoType.ammoItem && newAmmoType.ammoMod) {
+					// ---- Casing item
+					keyID = iniCalibers.GetValue(ammoSection, "sCasingID", "none");
+					newAmmoType.casingItem = (TESObjectMISC*)ATUtilities::GetFormFromIdentifier(keyID);
 
-							// projectile
-							keyID = iniAmmo.GetValue(projSection, "sProjectile", "none");
-							tempProjOverride.projectile = (BGSProjectile*)ATShared::GetFormFromIdentifier(keyID);
-							// keywords:
-							keyID = iniAmmo.GetValue(projSection, "sRequiredKW", "none");
-							tempProjOverride.projectileKW = (BGSKeyword*)ATShared::GetFormFromIdentifier(keyID);
-							keyID = iniAmmo.GetValue(projSection, "sExcludeKW", "none");
-							tempProjOverride.excludeKW = (BGSKeyword*)ATShared::GetFormFromIdentifier(keyID);
-							// impactData
-							keyID = iniAmmo.GetValue(projSection, "sImpactData", "none");
-							tempProjOverride.impactData = (BGSImpactDataSet*)ATShared::GetFormFromIdentifier(keyID);
+					// ---- Projectile Overrides
+					if (iniCalibers.GetAllValues(ammoSection, "sProjectiles", projValues)) {
+						CSimpleIni::TNamesDepend::const_iterator k = projValues.begin();
+						for (; k != projValues.end(); ++k) {
+							projSection = k->pItem;
+							ATCaliber::ProjectileOverride tempProjOverride;
 
-							// add to ammo's projectile overrides
-							newType.projectiles.Push(tempProjOverride);
+							// ---- Projectile
+							keyID = iniCalibers.GetValue(projSection, "sProjectile", "none");
+							tempProjOverride.projectile = (BGSProjectile*)ATUtilities::GetFormFromIdentifier(keyID);
+								
+							// ---- Required/Exclude Keywords
+							keyID = iniCalibers.GetValue(projSection, "sRequiredKW", "none");
+							tempProjOverride.projectileKW = ATUtilities::GetFormIDFromIdentifier(keyID);
+							keyID = iniCalibers.GetValue(projSection, "sExcludeKW", "none");
+							tempProjOverride.excludeKW = ATUtilities::GetFormIDFromIdentifier(keyID);
+
+							// ---- ImpactDataSet
+							keyID = iniCalibers.GetValue(projSection, "sImpactData", "none");
+							tempProjOverride.impactData = (BGSImpactDataSet*)ATUtilities::GetFormFromIdentifier(keyID);
+
+							newAmmoType.projectiles.Push(tempProjOverride);
 						}
 					}
-					valuesProj.clear();
+					newAmmoType.projectiles.capacity = newAmmoType.projectiles.count;
+					ammoTypes.Push(newAmmoType);
 
-					// add ammo type to the caliber list
-					ammoTypes.Push(newType);
-					bRetVal = true;
+					projValues.clear();
+				}
+				else {
+					_MESSAGE("!Missing Ammo item or mod! - Caliber %s: Subtype: %s, ID: 0x%08X", hudName.c_str(), newAmmoType.hudName.c_str());
 				}
 			}
+
+			if (ammoTypes.count > 0) {
+				ammoTypes.capacity = ammoTypes.count;
+				ammoValues.clear();
+				return true;
+			}
 		}
-		
-		values.clear();
+		ammoValues.clear();
 	}
-	return bRetVal;
+	return false;
 }
 
 
-// ----------------------- ATWeapon:
 
 // loads a weapon's data from the given ini file path
-bool ATWeapon::ReadIni(const char* configFileName, bool bSaveData, bool bLoadStatTweaks, bool bFollowerWeapons, bool bNPCsUseAmmo)
+bool ATWeapon::ReadIni(const char * configFileName)
 {
 	CSimpleIniA iniWeap;
 	iniWeap.SetUnicode();
 	iniWeap.SetMultiKey(true);
 
-	if (iniWeap.LoadFile(configFileName) > -1) {
+	std::string iniFileStr;
+	iniFileStr.append(configFileName);
+	iniFileStr.append("Weapon.ini");
+
+	if (iniWeap.LoadFile(iniFileStr.c_str()) > -1) {
 		const char *weapID = iniWeap.GetValue("Base", "sWeapID", "none");
-		TESForm *weapForm = ATShared::GetFormFromIdentifier(weapID);
-		TESObjectWEAP *tempWeapBase = DYNAMIC_CAST(weapForm, TESForm, TESObjectWEAP);
-		
-		if (tempWeapBase) {
-			TESObjectWEAP::InstanceData *instanceData = &tempWeapBase->weapData;
-			if (instanceData) {
-				const char *keyID = "";
-				CSimpleIni::TNamesDepend values;
-				
-				objectID = tempWeapBase->formID;
-				configPath = BSFixedString(configFileName);
-				hudName = iniWeap.GetValue("Base", "sName", "");
+		TESObjectWEAP *weaponBase = (TESObjectWEAP*)ATUtilities::GetFormFromIdentifier(weapID);
 
-				if (bLoadStatTweaks) {
-					// Base Damage
-					int iDamage = iniWeap.GetLongValue("Base", "iBaseDamage", -1);
-					if (iDamage > -1) {
-						instanceData->baseDamage = (UInt16)min(max(0, iDamage), 0xFF);
-					}
+		if (weaponBase) {
+			const char *keyID = "";
+			CSimpleIni::TNamesDepend values;
 
-					// Base DamageTypes
-					if (iniWeap.GetAllValues("Base", "sBaseDamageTypes", values)) {
-						int dtCount = values.size();
-						if (dtCount > 0) {
-							if (!instanceData->damageTypes) {
-								instanceData->damageTypes = new tArray<TBO_InstanceData::DamageTypes>();
-							}
-							int oldDTCount = instanceData->damageTypes->count;
+			objectID = weaponBase->formID;
+			configPath = BSFixedString(configFileName);
+			hudName = iniWeap.GetValue("Base", "sName", "");
 
-							CSimpleIni::TNamesDepend::const_iterator i = values.begin();
-							for (; i != values.end(); ++i) {
-								TBO_InstanceData::DamageTypes tempDT = ATShared::GetDamageTypeFromIdentifier(i->pItem);
-								if (tempDT.damageType && (tempDT.value > 0)) {
-									int iFound = -1;
-									for (UInt16 j = 0; j < oldDTCount; j++) {
-										TBO_InstanceData::DamageTypes checkDT;
-										if (instanceData->damageTypes->GetNthItem(j, checkDT)) {
-											if (checkDT.damageType == tempDT.damageType) {
-												checkDT.value = tempDT.value;
-												iFound = j;
-												break;
-											}
-										}
-									}
-									if (iFound < 0) {
-										instanceData->damageTypes->Push(tempDT);
-									}
-								}
-							}
-						}
-					}
-					values.clear();
+			// ---- Required Skill AV
+			keyID = iniWeap.GetValue("Base", "sRequiredSkill", "none");
+			requiredSkill = (ActorValueInfo*)ATUtilities::GetFormFromIdentifier(keyID);
 
-					// Secondary Damage
-					float fBaseSecDamage = iniWeap.GetDoubleValue("Base", "fBaseSecDamage", -1.0);
-					if (fBaseSecDamage >= 0.0) {
-						instanceData->secondary = fBaseSecDamage;
-					}
-
-					// AP Cost
-					float fAPCost = iniWeap.GetDoubleValue("Base", "fAPCost", -1.0);
-					if (fAPCost >= 0.0) {
-						instanceData->actionCost = fAPCost;
-					}
-
-					// Critical Charge/Chance Multiplier
-					float fCritChargeVal = iniWeap.GetDoubleValue("Base", "fCritChargeBonus", -1.0);
-					if (fCritChargeVal >= 0.0) {
-						instanceData->critChargeBonus = fCritChargeVal;
-					}
-
-					// Base Range
-					float fRangeMax = iniWeap.GetDoubleValue("Base", "fBaseRangeMax", -1.0);
-					if (fRangeMax >= 0.0) {
-						instanceData->maxRange = fRangeMax;
-					}
-					float fRangeMin = iniWeap.GetDoubleValue("Base", "fBaseRangeMin", -1.0);
-					if (fRangeMin >= 0.0) {
-						instanceData->minRange = fRangeMin;
-					}
-
-					// out of range damage mult.
-					float fOoRMult = iniWeap.GetDoubleValue("Base", "fOutOfRangeMult", -1.0);
-					if (fOoRMult >= 0.0) {
-						instanceData->outOfRangeMultiplier = fOoRMult;
-					}
-
-					// Melee Reach
-					float fReach = iniWeap.GetDoubleValue("Base", "fReach", -1.0);
-					if (fReach >= 0.0) {
-						instanceData->reach = fReach;
-					}
-
-					// Melee Stagger
-					int iStaggerAmount = iniWeap.GetLongValue("Base", "iStaggerAmount", -1);
-					if ((iStaggerAmount > -1) && (iStaggerAmount < 5)) {
-						instanceData->stagger = (UInt32)iStaggerAmount;
-					}
-
-					// value
-					int iCapsValue = iniWeap.GetDoubleValue("Base", "iBaseValue", -1);
-					if (iCapsValue >= 0) {
-						instanceData->value = (UInt32)iCapsValue;
-					}
-
-					// AimModel:
-					if (instanceData->aimModel) {
-						ATAimModel *aimModel = (ATAimModel*)instanceData->aimModel;
-						if (aimModel) {
-							// Recoil
-							float springForce = iniWeap.GetDoubleValue("Base", "fRecoilSpringForce", -1.0);
-							if (springForce >= 0.0) {
-								aimModel->Rec_DimSpringForce = springForce;
-							}
-							float recoilMin = iniWeap.GetDoubleValue("Base", "fRecoilMin", -1.0);
-							if (recoilMin >= 0.0) {
-								aimModel->Rec_MinPerShot = recoilMin;
-							}
-							float recoilMax = iniWeap.GetDoubleValue("Base", "fRecoilMax", -1.0);
-							if (recoilMax >= 0.0) {
-								aimModel->Rec_MaxPerShot = recoilMax;
-							}
-							float recoilHipMult = iniWeap.GetDoubleValue("Base", "fRecoilHipMult", -1.0);
-							if (recoilHipMult >= 0.0) {
-								aimModel->Rec_HipMult = recoilHipMult;
-							}
-
-							// Cone of Fire
-							float cofMin = iniWeap.GetDoubleValue("Base", "fConeOfFireMin", -1.0);
-							if (cofMin >= 0.0) {
-								aimModel->CoF_MinAngle = cofMin;
-							}
-							float cofMax = iniWeap.GetDoubleValue("Base", "fConeOfFireMax", -1.0);
-							if (cofMax >= 0.0) {
-								aimModel->CoF_MaxAngle = cofMax;
-							}
-						}
-					}
-
-
-					// default ammo
-					keyID = iniWeap.GetValue("Base", "sAmmoID", "none");
-					TESAmmo *ammoDefault = (TESAmmo*)ATShared::GetFormFromIdentifier(keyID);
-					if (ammoDefault) {
-						instanceData->ammo = ammoDefault;
-					}
-
-					// NPC ammo list
-					keyID = iniWeap.GetValue("Base", "sAmmoLootList", "none");
-					TESLevItem *ammoLoot = (TESLevItem*)ATShared::GetFormFromIdentifier(keyID);
-					if (ammoLoot) {
-						instanceData->addAmmoList = ammoLoot;
-					}
-
-					// default projectile override
-					if (instanceData->firingData) {
-						keyID = iniWeap.GetValue("Base", "sProjectile", "none");
-						BGSProjectile *projOvrd = (BGSProjectile*)ATShared::GetFormFromIdentifier(keyID);
-						if (projOvrd) {
-							instanceData->firingData->projectileOverride = projOvrd;
-						}
-					}
-
-					// ImpactDataList
-					keyID = iniWeap.GetValue("Base", "sImpactDataSet", "none");
-					BGSImpactDataSet *tempImpactData = (BGSImpactDataSet*)ATShared::GetFormFromIdentifier(keyID);
-					if (tempImpactData) {
-						instanceData->unk58 = tempImpactData;
-					}
-				}
-				
-
-				// Flags
-				if (instanceData->flags) {
-					// NPCsUseAmmo
-					if (bNPCsUseAmmo) {
-						bool bUseAmmo = iniWeap.GetBoolValue("Base", "bNPCsUseAmmo", false);
-						if (bUseAmmo)
-							instanceData->flags |= ATShared::ATData.wFlag_NPCsUseAmmo;
-						else
-							instanceData->flags &= ATShared::ATData.wFlag_NPCsUseAmmo;
-					}
-
-					// remove the 'not playable' and 'can't drop' flags from follower weapons
-					if (bFollowerWeapons) {
-						bool bFollowerWeapon = iniWeap.GetBoolValue("Base", "bFollowerWeapon", false);
-						if (bFollowerWeapon) {
-							instanceData->flags &= ATShared::ATData.wFlag_CantDrop;
-							instanceData->flags &= ATShared::ATData.wFlag_NotPlayable;
+			// ---- Critical Failure Table
+			if (iniWeap.GetAllValues("Base", "sCritFailures", values)) {
+				if (values.size() > 0) {
+					CSimpleIni::TNamesDepend::const_iterator j = values.begin();
+					for (; j != values.end(); ++j) {
+						ATCritEffect newCritEffect;
+						if (ATUtilities::GetCritEffectFromIdentifier(j->pItem, newCritEffect)) {
+							critFailures.Push(newCritEffect);
 						}
 					}
 				}
-
-				
-
-				// ActorValue Modifiers
-				if (iniWeap.GetAllValues("Base", "sActorValues", values)) {
-					if (values.size() > 0) {
-						if (!instanceData->modifiers) {
-							instanceData->modifiers = new tArray<TBO_InstanceData::ValueModifier>();
-						}
-						CSimpleIni::TNamesDepend::const_iterator i = values.begin();
-						for (; i != values.end(); ++i) {
-							keyID = i->pItem;
-							TBO_InstanceData::ValueModifier newAVMod = ATShared::GetAVModiferFromIdentifer(keyID);
-							if ((newAVMod.avInfo) && (newAVMod.unk08 > 0)) {
-								instanceData->modifiers->Push(newAVMod);
-							}
-						}
-					}
-				}
-				values.clear();
-
-				// Enchantments
-				if (iniWeap.GetAllValues("Base", "sEnchantments", values)) {
-					if (values.size() > 0) {
-						if (!instanceData->enchantments) {
-							instanceData->enchantments = new tArray<EnchantmentItem*>();
-						}
-						CSimpleIni::TNamesDepend::const_iterator i = values.begin();
-						for (; i != values.end(); ++i) {
-							keyID = i->pItem;
-							EnchantmentItem *tempEnch = (EnchantmentItem*)ATShared::GetFormFromIdentifier(keyID);
-							if (tempEnch) {
-								instanceData->enchantments->Push(tempEnch);
-							}
-						}
-					}
-				}
-				values.clear();
-
-				// Keywords
-				if (iniWeap.GetAllValues("Base", "sKeywords", values)) {
-					int kwCount = values.size();
-					if (kwCount > 0) {
-						BGSKeyword **keywords = new BGSKeyword*[tempWeapBase->keyword.numKeywords + kwCount];
-						if (tempWeapBase->keyword.numKeywords > 0) {
-							for (UInt8 i = 0; i < tempWeapBase->keyword.numKeywords; i++) {
-								keywords[i] = tempWeapBase->keyword.keywords[i];
-							}
-						}
-						CSimpleIni::TNamesDepend::const_iterator i = values.begin();
-						int j = 0;
-						for (; i != values.end(); ++i) {
-							keyID = i->pItem;
-							BGSKeyword *tempKW = (BGSKeyword*)ATShared::GetFormFromIdentifier(keyID);
-							if (tempKW) {
-								keywords[j + tempWeapBase->keyword.numKeywords] = tempKW;
-							}
-							j += 1;
-						}
-						if (j > 0) {
-							tempWeapBase->keyword.numKeywords = tempWeapBase->keyword.numKeywords + j;
-							tempWeapBase->keyword.keywords = keywords;
-						}
-					}
-				}
-				values.clear();
-
-
-				// create custom data if needed
-				if (bSaveData) {
-					// Required Skill AV
-					keyID = iniWeap.GetValue("Base", "sRequiredSkill", "none");
-					requiredSkill = (ActorValueInfo*)ATShared::GetFormFromIdentifier(keyID);
-
-					// crit failure table
-					keyID = iniWeap.GetValue("Base", "sCritFailureTable", "none");
-					critFailureType = (BGSKeyword*)ATShared::GetFormFromIdentifier(keyID);
-
-					// Ammo Swapping animations
-					keyID = iniWeap.GetValue("Base", "sAmmoSwapIdle_1P", "none");
-					ammoSwapIdle_1P = (TESForm*)ATShared::GetFormFromIdentifier(keyID);
-
-					keyID = iniWeap.GetValue("Base", "sAmmoSwapIdle_3P", "none");
-					ammoSwapIdle_3P = (TESForm*)ATShared::GetFormFromIdentifier(keyID);
-
-					ammoSwapAnimEvent = BSFixedString(iniWeap.GetValue("Base", "sAmmoSwapAnimEvent", ""));
-
-					// Swappable Mods
-					if (iniWeap.GetAllValues("Base", "sSwapModSlots", values)) {
-						int modSlotCount = values.size();
-						if (modSlotCount > 0) {
-							CSimpleIni::TNamesDepend sections;
-							CSimpleIni::TNamesDepend::const_iterator i = values.begin();
-							for (; i != values.end(); ++i) {
-								if (iniWeap.GetAllValues(i->pItem, "sMods", sections)) {
-									if (sections.size() > 0) {
-										ModSlot newSlot;
-										newSlot.slotName = BSFixedString(iniWeap.GetValue(i->pItem, "sName", "none"));
-										CSimpleIni::TNamesDepend::const_iterator j = sections.begin();
-										for (; j != sections.end(); ++j) {
-											ATSwappableMod newMod;
-											keyID = iniWeap.GetValue(j->pItem, "sModID", "none");
-											newMod.swapMod = (BGSMod::Attachment::Mod*)ATShared::GetFormFromIdentifier(keyID);
-
-											if (newMod.swapMod) {
-												keyID = iniWeap.GetValue(j->pItem, "sRequiredKW", "none");
-												newMod.requiredKW = (BGSKeyword*)ATShared::GetFormFromIdentifier(keyID);
-
-												keyID = iniWeap.GetValue(j->pItem, "sRequiredItem", "none");
-												newMod.modItem = (TESForm*)ATShared::GetFormFromIdentifier(keyID);
-
-												
-												newMod.bRequireModMisc = iniWeap.GetBoolValue(j->pItem, "bRequireModMisc", false);
-
-												newSlot.swappableMods.Push(newMod);
-											}
-										}
-
-										keyID = iniWeap.GetValue(i->pItem, "sSwapIdleAnim_1P", "none");
-										newSlot.swapIdle_1P = (TESForm*)ATShared::GetFormFromIdentifier(keyID);
-
-										keyID = iniWeap.GetValue(i->pItem, "sSwapIdleAnim_3P", "none");
-										newSlot.swapIdle_3P = (TESForm*)ATShared::GetFormFromIdentifier(keyID);
-
-										newSlot.swapAnimEventName = BSFixedString(iniWeap.GetValue(i->pItem, "sSwapAnimEvent", ""));
-
-
-										modSlots.Push(newSlot);
-									}
-								}
-								sections.clear();
-							}
-						}
-					}
-					values.clear();
-
-					// Damaged Mods
-					if (iniWeap.GetAllValues("Base", "sDamagedModSlots", values)) {
-						int modSlotCount = values.size();
-						if (modSlotCount > 0) {
-							CSimpleIni::TNamesDepend sections;
-							CSimpleIni::TNamesDepend::const_iterator i = values.begin();
-							for (; i != values.end(); ++i) {
-								if (iniWeap.GetAllValues(i->pItem, "sMods", sections)) {
-									if (sections.size() > 0) {
-										ModSlot newSlot;
-										newSlot.slotName = BSFixedString(iniWeap.GetValue(i->pItem, "sName", "none"));
-										CSimpleIni::TNamesDepend::const_iterator j = sections.begin();
-										for (; j != sections.end(); ++j) {
-											ATSwappableMod newMod;
-											keyID = iniWeap.GetValue(j->pItem, "sModID", "none");
-											newMod.swapMod = (BGSMod::Attachment::Mod*)ATShared::GetFormFromIdentifier(keyID);
-
-											if (newMod.swapMod) {
-												keyID = iniWeap.GetValue(j->pItem, "sRequiredKW", "none");
-												newMod.requiredKW = (BGSKeyword*)ATShared::GetFormFromIdentifier(keyID);
-
-												newSlot.swappableMods.Push(newMod);
-											}
-										}
-										damagedMods.Push(newSlot);
-									}
-								}
-								sections.clear();
-							}
-						}
-					}
-					values.clear();
-
-					// Magazines
-					iReloadType = iniWeap.GetLongValue("Base", "iReloadType", -1);
-					if (iReloadType > -1) {
-						if (iniWeap.GetAllValues("Base", "sMagazines", values)) {
-							int magsCount = values.size();
-							if (magsCount > 0) {
-								CSimpleIni::TNamesDepend::const_iterator i = values.begin();
-								for (; i != values.end(); ++i) {
-									DroppableMag newMag;
-									keyID = iniWeap.GetValue(i->pItem, "sMagItem", "none");
-									newMag.magItem = (TESObjectMISC*)ATShared::GetFormFromIdentifier(keyID);
-									if (newMag.magItem) {
-										keyID = iniWeap.GetValue(i->pItem, "sRequiredKW", "none");
-										newMag.magKW = (BGSKeyword*)ATShared::GetFormFromIdentifier(keyID);
-
-										magazines.Push(newMag);
-									}
-								}
-							}
-						}
-					}
-					values.clear();
-
-					// Holsters
-					if (iniWeap.GetAllValues("Base", "sHolsters", values)) {
-						int holstersCount = values.size();
-						if (holstersCount > 0) {
-							CSimpleIni::TNamesDepend::const_iterator i = values.begin();
-							for (; i != values.end(); ++i) {
-								HolsterArmor newHolster;
-								keyID = iniWeap.GetValue(i->pItem, "sArmorWeapon", "none");
-								newHolster.armorWeapon = (TESObjectARMO*)ATShared::GetFormFromIdentifier(keyID);
-
-								if (newHolster.armorWeapon) {
-									keyID = iniWeap.GetValue(i->pItem, "sArmorHolster", "none");
-									newHolster.armorHolster = (TESObjectARMO*)ATShared::GetFormFromIdentifier(keyID);
-
-									keyID = iniWeap.GetValue(i->pItem, "sRequiredKW", "none");
-									newHolster.requiredKW = (BGSKeyword*)ATShared::GetFormFromIdentifier(keyID);
-
-									newHolster.holsterName = BSFixedString(iniWeap.GetValue(i->pItem, "sName", " "));
-
-									holsters.Push(newHolster);
-								}
-							}
-						}
-					}
-					values.clear();
-
-				}
-				return true;
 			}
+			values.clear();
+			critFailures.capacity = critFailures.count;
+
+			// ---- Bash Crit Failure Table
+			if (iniWeap.GetAllValues("Base", "sBashCritFailures", values)) {
+				if (values.size() > 0) {
+					CSimpleIni::TNamesDepend::const_iterator j = values.begin();
+					for (; j != values.end(); ++j) {
+						ATCritEffect newCritEffect;
+						if (ATUtilities::GetCritEffectFromIdentifier(j->pItem, newCritEffect)) {
+							critFailures_Bash.Push(newCritEffect);
+						}
+					}
+				}
+			}
+			values.clear();
+			critFailures_Bash.capacity = critFailures_Bash.count;
+
+			// ---- Supported Calibers
+			CSimpleIni::TNamesDepend caliberValues;
+			std::string caliberFileStr;
+			if (iniWeap.GetAllValues("Base", "sCalibers", values)) {
+				CSimpleIni::TNamesDepend::const_iterator i = values.begin();
+				for (; i != values.end(); ++i) {
+					const char * caliberName = i->pItem;
+					caliberFileStr.append(configFileName);
+					caliberFileStr.append("Calibers\\");
+					caliberFileStr.append(caliberName);
+					caliberFileStr.append(".ini");
+					ATCaliber newCaliber;
+					if (newCaliber.ReadIni(caliberFileStr.c_str())) {
+						calibers.Push(newCaliber);
+					}
+					caliberFileStr.clear();
+				}
+			}
+			values.clear();
+			calibers.capacity = calibers.count;
+
+			// ---- Caliber Worbench Recipe Keywords
+			if (calibers.count > 0) {
+				tArray<BGSKeyword*> caliberRecipes;
+				for (UInt32 j = 0; j < calibers.count; j++) {
+					if (calibers[j].recipeKW) {
+						caliberRecipes.Push(calibers[j].recipeKW);
+					}
+				}
+				if (caliberRecipes.count > 0) {
+					int keywordsCount = weaponBase->keyword.numKeywords;
+					if (keywordsCount > 0) {
+						for (UInt32 j = 0; j < keywordsCount; j++) {
+							if (weaponBase->keyword.keywords[j]) {
+								caliberRecipes.Push(weaponBase->keyword.keywords[j]);
+							}
+						}
+						keywordsCount = caliberRecipes.count;
+						weaponBase->keyword.numKeywords = keywordsCount;
+						weaponBase->keyword.keywords = new BGSKeyword*[keywordsCount];
+
+						for (UInt32 j = 0; j < keywordsCount; j++) {
+							weaponBase->keyword.keywords[j] = caliberRecipes[j];
+						}
+					}
+					caliberRecipes.Clear();
+				}
+			}
+
+			// ---- Swappable Mod Slots
+			if (iniWeap.GetAllValues("Base", "sSwapModSlots", values)) {
+				if (values.size() > 0) {
+					CSimpleIni::TNamesDepend sections;
+					CSimpleIni::TNamesDepend::const_iterator i = values.begin();
+					for (; i != values.end(); ++i) {
+						const char * modSlotName = i->pItem;
+						if (iniWeap.GetAllValues(modSlotName, "sMods", sections)) {
+							if (sections.size() > 0) {
+								ATModSlot newSlot;
+
+								CSimpleIni::TNamesDepend::const_iterator j = sections.begin();
+								for (; j != sections.end(); ++j) {
+									const char * sectionName = j->pItem;
+									ATSwappableMod newMod;
+									keyID = iniWeap.GetValue(sectionName, "sModID", "none");
+									newMod.swapMod = (BGSMod::Attachment::Mod*)ATUtilities::GetFormFromIdentifier(keyID);
+
+									if (newMod.swapMod) {
+										keyID = iniWeap.GetValue(sectionName, "sRequiredKW", "none");
+										newMod.requiredKW = ATUtilities::GetFormIDFromIdentifier(keyID);
+
+										keyID = iniWeap.GetValue(sectionName, "sRequiredItem", "none");
+										newMod.modItem = (TESForm*)ATUtilities::GetFormFromIdentifier(keyID);
+
+										newMod.bRequireModMisc = iniWeap.GetBoolValue(sectionName, "bRequireModMisc", false);
+
+										newSlot.swappableMods.Push(newMod);
+									}
+								}
+								newSlot.swappableMods.capacity = newSlot.swappableMods.count;
+
+								// add name + push if the slot has any mods
+								if (newSlot.swappableMods.count > 0) {
+									newSlot.slotName = BSFixedString(iniWeap.GetValue(modSlotName, "sName", "none"));
+
+									keyID = iniWeap.GetValue(modSlotName, "sSwapIdleAnim_1P", "none");
+									newSlot.swapIdle_1P = (TESForm*)ATUtilities::GetFormFromIdentifier(keyID);
+									keyID = iniWeap.GetValue(modSlotName, "sSwapIdleAnim_3P", "none");
+									newSlot.swapIdle_3P = (TESForm*)ATUtilities::GetFormFromIdentifier(keyID);
+									newSlot.swapAnimEventName = BSFixedString(iniWeap.GetValue(modSlotName, "sSwapAnimEvent", ""));
+
+									modSlots.Push(newSlot);
+								}
+							}
+						}
+						sections.clear();
+					}
+				}
+			}
+			values.clear();
+			modSlots.capacity = modSlots.count;
+
+			// ---- Damaged Mod Slots
+			if (iniWeap.GetAllValues("Base", "sDamagedModSlots", values)) {
+				int modSlotCount = values.size();
+				if (modSlotCount > 0) {
+					CSimpleIni::TNamesDepend sections;
+					CSimpleIni::TNamesDepend::const_iterator i = values.begin();
+					for (; i != values.end(); ++i) {
+						const char * modSlotName = i->pItem;
+						if (iniWeap.GetAllValues(modSlotName, "sModID", sections)) {
+							if (sections.size() > 0) {
+								ATDamagedModSlot newSlot;
+								newSlot.slotName = BSFixedString(iniWeap.GetValue(modSlotName, "sName", "none"));
+								CSimpleIni::TNamesDepend::const_iterator j = sections.begin();
+								for (; j != sections.end(); ++j) {
+									keyID = j->pItem;
+									BGSMod::Attachment::Mod * swapMod = (BGSMod::Attachment::Mod*)ATUtilities::GetFormFromIdentifier(keyID);
+									if (swapMod) {
+										newSlot.damagedMods.Push(swapMod);
+									}
+								}
+								newSlot.damagedMods.capacity = newSlot.damagedMods.count;
+								if (newSlot.damagedMods.count > 0)
+									damagedModSlots.Push(newSlot);
+							}
+						}
+						sections.clear();
+					}
+				}
+			}
+			values.clear();
+			damagedModSlots.capacity = damagedModSlots.count;
+
+			// ---- Droppable Magazine Items
+			iReloadType = iniWeap.GetLongValue("Base", "iReloadType", -1);
+			if (iReloadType > -1) {
+				if (iniWeap.GetAllValues("Base", "sMagazines", values)) {
+					int magsCount = values.size();
+					if (magsCount > 0) {
+						CSimpleIni::TNamesDepend::const_iterator i = values.begin();
+						for (; i != values.end(); ++i) {
+							ATMagItem newMag;
+							keyID = iniWeap.GetValue(i->pItem, "sMagItem", "none");
+							newMag.magItem = (TESObjectMISC*)ATUtilities::GetFormFromIdentifier(keyID);
+							if (newMag.magItem) {
+								keyID = iniWeap.GetValue(i->pItem, "sRequiredKW", "none");
+								newMag.magKW = ATUtilities::GetFormIDFromIdentifier(keyID);
+								magazines.Push(newMag);
+							}
+						}
+					}
+				}
+			}
+			values.clear();
+			magazines.capacity = magazines.count;
+
+			// ---- Weapon Holstering
+			if (iniWeap.GetAllValues("Base", "sHolsters", values)) {
+				int holstersCount = values.size();
+				if (holstersCount > 0) {
+					CSimpleIni::TNamesDepend::const_iterator i = values.begin();
+					for (; i != values.end(); ++i) {
+						ATHolsterArmor newHolster;
+						keyID = iniWeap.GetValue(i->pItem, "sArmorWeapon", "none");
+						newHolster.armorWeapon = (TESObjectARMO*)ATUtilities::GetFormFromIdentifier(keyID);
+
+						if (newHolster.armorWeapon) {
+							keyID = iniWeap.GetValue(i->pItem, "sRequiredKW", "none");
+							newHolster.requiredKW = ATUtilities::GetFormIDFromIdentifier(keyID);
+
+							newHolster.holsterName = BSFixedString(iniWeap.GetValue(i->pItem, "sName", " "));
+
+							holsters.Push(newHolster);
+						}
+					}
+				}
+			}
+			values.clear();
+			holsters.capacity = holsters.count;
+			return true;
 		}
 	}
 	return false;
 }
 
 
-// ----------------------- ATDataStore:
+// -------- ATGameData functions:
 
-bool ATDataStore::LoadData_CritEffectTables(const std::string & configDir)
+// loads critical effects from ini
+bool ATGameData::LoadData_CritEffectTables(const std::string & configDir)
 {
 	CSimpleIniA iniCritTables;
 	iniCritTables.SetUnicode();
@@ -529,42 +361,36 @@ bool ATDataStore::LoadData_CritEffectTables(const std::string & configDir)
 		
 		if (sections.size() > 0) {
 			CSimpleIni::TNamesDepend values;
-			_MESSAGE("    [Crit Effect Tables]:  %i", sections.size());
-
 			CSimpleIni::TNamesDepend::const_iterator i = sections.begin();
 			for (; i != sections.end(); ++i) {
 				ATCritEffectTable newTable;
 				const char *tableName = i->pItem;
 				newTable.hudName = BSFixedString(iniCritTables.GetValue(tableName, "sName", " "));
 				const char *keyID = iniCritTables.GetValue(tableName, "sCritKW", "none");
-				newTable.objectID = ATShared::GetFormIDFromIdentifier(keyID);
+				newTable.objectID = ATUtilities::GetFormIDFromIdentifier(keyID);
 				
 				if (iniCritTables.GetAllValues(tableName, "sCritEffects", values)) {
 					if (values.size() > 0) {
 						CSimpleIni::TNamesDepend::const_iterator j = values.begin();
 						// default/fallback crit effects:
-						int rollAccum = -255;
 						for (; j != values.end(); ++j) {
-							ATCritEffect newCritEffect = ATShared::GetCritEffectFromIdentifier(j->pItem);
-							newCritEffect.rollMin = rollAccum;
-							rollAccum = newCritEffect.rollMax + 1;
-							newTable.critEffects.Push(newCritEffect);
+							ATCritEffect newCritEffect;
+							if (ATUtilities::GetCritEffectFromIdentifier(j->pItem, newCritEffect)) {
+								newTable.defaultEffects.Push(newCritEffect);
+							}
 						}
+						newTable.defaultEffects.capacity = newTable.defaultEffects.count;
 
 						int foundIndex = GetCritTableIndex(newTable.objectID);
-						if (foundIndex > -1) {
-							CritEffectTables[foundIndex] = newTable;
-							_MESSAGE("        #Override#: 0x%08X - %s", newTable.objectID, newTable.hudName.c_str());
-						}
-						else {
-							CritEffectTables.Push(newTable);
-							//_MESSAGE("        Loaded  : 0x%08X - %s", newTable.objectID, newTable.hudName.c_str());
+						if (foundIndex == -1) {
+							ATCritEffectTables.Push(newTable);
 						}
 					}
 				}
 				values.clear();
 			}
 			sections.clear();
+			ATCritEffectTables.capacity = ATCritEffectTables.count;
 			return true;
 		}
 	}
@@ -572,102 +398,8 @@ bool ATDataStore::LoadData_CritEffectTables(const std::string & configDir)
 }
 
 
-bool ATDataStore::LoadData_CritFailureTables(const std::string & configDir)
-{
-	CSimpleIniA iniCritTables;
-	iniCritTables.SetUnicode();
-	iniCritTables.SetMultiKey(true);
-
-	if (iniCritTables.LoadFile(configDir.c_str()) > -1) {
-		CSimpleIni::TNamesDepend sections;
-		iniCritTables.GetAllSections(sections);
-
-		if (sections.size() > 0) {
-			CSimpleIni::TNamesDepend values;
-			_MESSAGE("    Crit Failure Tables: %i", sections.size());
-
-			CSimpleIni::TNamesDepend::const_iterator i = sections.begin();
-			for (; i != sections.end(); ++i) {
-				ATCritEffectTable newTable;
-				const char *tableName = i->pItem;
-				newTable.hudName = BSFixedString(iniCritTables.GetValue(tableName, "sName", " "));
-				const char *keyID = iniCritTables.GetValue(tableName, "sCritKW", "none");
-				newTable.objectID = ATShared::GetFormIDFromIdentifier(keyID);
-
-				if (iniCritTables.GetAllValues(tableName, "sCritFailures", values)) {
-					if (values.size() > 0) {
-						CSimpleIni::TNamesDepend::const_iterator j = values.begin();
-						int rollAccum = -255;
-						for (; j != values.end(); ++j) {
-							ATCritEffect newCritEffect = ATShared::GetCritEffectFromIdentifier(j->pItem);
-							newCritEffect.rollMin = rollAccum;
-							rollAccum = newCritEffect.rollMax + 1;
-							newTable.critEffects.Push(newCritEffect);
-						}
-
-						int foundIndex = GetCritTableIndex(newTable.objectID);
-						if (foundIndex > -1) {
-							CritFailureTables[foundIndex] = newTable;
-							_MESSAGE("        #Override#: 0x%08X - %s", newTable.objectID, newTable.hudName.c_str());
-						}
-						else {
-							CritFailureTables.Push(newTable);
-							//_MESSAGE("        Loaded  : 0x%08X - %s", newTable.objectID, newTable.hudName.c_str());
-						}
-					}
-				}
-				values.clear();
-			}
-			sections.clear();
-			return true;
-		}
-	}
-	return false;
-}
-
-
-UInt32 ATDataStore::LoadData_Weapon(const std::string & configDir, bool bSaveData, bool bLoadStatTweaks, bool bFollowerWeapons, bool bNPCsUseAmmo)
-{
-	ATWeapon newWeapon;
-	if (newWeapon.ReadIni(configDir.c_str(), bSaveData, bLoadStatTweaks, bFollowerWeapons, bNPCsUseAmmo)) {
-		if (bSaveData) {
-			int foundIndex = ATShared::ATData.GetWeaponIndex(newWeapon.objectID);
-			if (foundIndex > -1) {
-				ATShared::ATData.Weapons[foundIndex] = newWeapon;
-				_MESSAGE("        #Override#:        0x%08X - %s", newWeapon.objectID, newWeapon.hudName.c_str());
-			}
-			else {
-				ATShared::ATData.Weapons.Push(newWeapon);
-				//_MESSAGE("        Loaded  : 0x%08X - %s", newWeapon.objectID, newWeapon.hudName.c_str());
-			}
-		}
-		return newWeapon.objectID;
-	}
-	return 0;
-}
-
-
-UInt32 ATDataStore::LoadData_Caliber(const std::string & configDir)
-{
-	ATCaliber caliberStore;
-	if (caliberStore.ReadIni(configDir.c_str())) {
-		UInt32 tempID = caliberStore.objectID;
-		int foundIndex = ATShared::ATData.GetCaliberIndex(tempID);
-		if (foundIndex > -1) {
-			ATShared::ATData.Calibers[foundIndex] = caliberStore;
-			_MESSAGE("        #Override#:        0x%08X - %s", caliberStore.objectID, caliberStore.hudName.c_str());
-		}
-		else {
-			ATShared::ATData.Calibers.Push(caliberStore);
-			//_MESSAGE("        Loaded  : 0x%08X - %s", caliberStore.objectID, caliberStore.hudName.c_str());
-		}
-		return tempID;
-	}
-	return 0;
-}
-
-
-bool ATDataStore::LoadData_Plugin(const std::string & configDir, bool bLoadStatTweaks, bool bLoadTurrets, bool bLoadThrownWeapons, bool bFollowerWeapons, bool bNPCsUseAmmo)
+// loads AmmoTweaks data from ini files at the the specified path
+bool ATGameData::LoadData_Template(const std::string & configDir)
 {
 	std::string tempIniPath = configDir.c_str();
 	CSimpleIniA iniIndex;
@@ -678,44 +410,35 @@ bool ATDataStore::LoadData_Plugin(const std::string & configDir, bool bLoadStatT
 	iniIndex.SetUnicode();
 	iniIndex.SetMultiKey(true);
 	
-	tempIniPath.append("\\Index.ini");
-
+	tempIniPath.append("\\Weapons\\Index.ini");
 	if (iniIndex.LoadFile(tempIniPath.c_str()) > -1) {
-		_MESSAGE("\n  Loading .ini: %s", tempIniPath.c_str());
-
-		// Ammo
-		if (iniIndex.GetAllValues("Calibers", "sCalibers", values)) {
-			_MESSAGE("    [Calibers]:            %i", values.size());
-			CSimpleIni::TNamesDepend::const_iterator i = values.begin();
-			for (; i != values.end(); ++i) {
-				tempLoadPath += configDir;
-				tempLoadPath.append("\\Calibers\\");
-				tempLoadPath.append(i->pItem);
-				tempLoadPath.append(".ini");
-				loadMsg = LoadData_Caliber(tempLoadPath);
-				if (loadMsg <= 0) {
-					_MESSAGE("      !Failed!:          %s", i->pItem);
-					return false;
-				}
-				tempLoadPath.clear();
-			}
-		}
-		values.clear();
-
-		// Weapons:
-
+		const char * tempKey = "";
+		// -------- Weapons
 		// ranged
 		if (iniIndex.GetAllValues("Weapons", "sRangedWeapons", values)) {
-			_MESSAGE("    [Ranged Weapons]:      %i", values.size());
 			CSimpleIni::TNamesDepend::const_iterator i = values.begin();
 			for (; i != values.end(); ++i) {
+				tempKey = i->pItem;
 				tempLoadPath += configDir;
 				tempLoadPath.append("\\Weapons\\Ranged\\");
-				tempLoadPath.append(i->pItem);
-				tempLoadPath.append(".ini");
-				loadMsg = LoadData_Weapon(tempLoadPath, true, bLoadStatTweaks, bFollowerWeapons, bNPCsUseAmmo);
+				tempLoadPath.append(tempKey);
+				tempLoadPath.append("\\");
+				
+				loadMsg = -1;
+				ATWeapon newWeapon;
+				if (newWeapon.ReadIni(tempLoadPath.c_str())) {
+					int foundIndex = GetWeaponIndex(newWeapon.objectID);
+					if (foundIndex == -1) {
+						loadMsg = newWeapon.objectID;
+						ATWeapons.Push(newWeapon);
+					}
+					else {
+						ATWeapons[foundIndex] = newWeapon;
+					}
+				}
+
 				if (loadMsg <= 0) {
-					_MESSAGE("      !Failed!:  %s", i->pItem);
+					_MESSAGE("      !Failed!:  %s", tempKey);
 					return false;
 				}
 				tempLoadPath.clear();
@@ -725,60 +448,48 @@ bool ATDataStore::LoadData_Plugin(const std::string & configDir, bool bLoadStatT
 
 		// melee
 		if (iniIndex.GetAllValues("Weapons", "sMeleeWeapons", values)) {
-			_MESSAGE("    [Melee Weapons]:       %i", values.size());
 			CSimpleIni::TNamesDepend::const_iterator i = values.begin();
 			for (; i != values.end(); ++i) {
+				tempKey = i->pItem;
 				tempLoadPath += configDir;
 				tempLoadPath.append("\\Weapons\\Melee\\");
-				tempLoadPath.append(i->pItem);
-				tempLoadPath.append(".ini");
-				loadMsg = LoadData_Weapon(tempLoadPath, true, bLoadStatTweaks, bFollowerWeapons, false);
+				tempLoadPath.append(tempKey);
+				tempLoadPath.append("\\");
+				loadMsg = -1;
+
+				ATWeapon newWeapon;
+				if (newWeapon.ReadIni(tempLoadPath.c_str())) {
+					int foundIndex = GetWeaponIndex(newWeapon.objectID);
+					if (foundIndex == -1) {
+						loadMsg = newWeapon.objectID;
+						ATWeapons.Push(newWeapon);
+					}
+					else {
+						ATWeapons[foundIndex] = newWeapon;
+					}
+				}
+
 				if (loadMsg <= 0) {
-					_MESSAGE("      !!Failed:  %s", i->pItem);
+					_MESSAGE("      !!Failed:  %s", tempKey);
 					return false;
 				}
 				tempLoadPath.clear();
 			}
 		}
 		values.clear();
-
-		if (bLoadThrownWeapons) {
-			if (iniIndex.GetAllValues("Weapons", "sThrownWeapons", values)) {
-				_MESSAGE("    [Thrown Weapons]:      %i", values.size());
-			}
-			values.clear();
+		
+		// thrown
+		if (iniIndex.GetAllValues("Weapons", "sThrownWeapons", values)) {
+			_MESSAGE("    [Thrown Weapons]:      %i", values.size());
 		}
+		values.clear();
 
-		if (bLoadTurrets) {
-			if (iniIndex.GetAllValues("Weapons", "sTurrets", values)) {
-				_MESSAGE("    [Turrets]:             %i", values.size());
-				CSimpleIni::TNamesDepend::const_iterator i = values.begin();
-				for (; i != values.end(); ++i) {
-					tempLoadPath += configDir;
-					tempLoadPath.append("\\Weapons\\Turret\\");
-					tempLoadPath.append(i->pItem);
-					tempLoadPath.append(".ini");
-					loadMsg = LoadData_Weapon(tempLoadPath, false, true, false, false);
-					if (loadMsg <= 0) {
-						_MESSAGE("      !!Failed:  %s", i->pItem);
-						return false;
-					}
-					tempLoadPath.clear();
-				}
-			}
-			values.clear();
-		}
+		ATWeapons.capacity = ATWeapons.count;
 
-		// critical effect tables
+		// -------- critical effect tables
 		tempLoadPath += configDir;
-		tempLoadPath.append("\\Misc\\CritEffectTables.ini");
+		tempLoadPath.append("\\CritEffectTables.ini");
 		LoadData_CritEffectTables(tempLoadPath);
-		tempLoadPath.clear();
-
-		// critical failure tables
-		tempLoadPath += configDir;
-		tempLoadPath.append("\\Misc\\CritFailureTables.ini");
-		LoadData_CritFailureTables(tempLoadPath);
 		tempLoadPath.clear();
 
 		return true;
@@ -787,141 +498,139 @@ bool ATDataStore::LoadData_Plugin(const std::string & configDir, bool bLoadStatT
 	return false;
 }
 
-bool ATDataStore::FinalizeData(bool bEnableLog)
+// debug log
+bool ATGameData::LogConfigData()
 {
-	bool bCheckPassed = false;
-	_MESSAGE("\nFinalizing data...\n");
+	_MESSAGE("\nStored data:");
 
-	// limit array capacities to save some memory:
-	Calibers.capacity = Calibers.count;
-	Weapons.capacity = Weapons.count;
-	CritEffectTables.capacity = CritEffectTables.count;
-	CritFailureTables.capacity = CritFailureTables.count;
-
-	if (bEnableLog)
-		_MESSAGE("  [Calibers] (%i):", Calibers.count);
-
-	for (UInt32 i = 0; i < Calibers.count; i++) {
-		ATCaliber curCaliber = Calibers[i];
-		curCaliber.ammoTypes.capacity = curCaliber.ammoTypes.count;
-		for (UInt32 j = 0; j < curCaliber.ammoTypes.count; j++) {
-			ATCaliber::AmmoType tempAmmoType = curCaliber.ammoTypes[j];
-			tempAmmoType.projectiles.capacity = tempAmmoType.projectiles.count;
-		}
-		
-		if (bEnableLog)
-			_MESSAGE("    0x%08X - %s : %i ammo types", curCaliber.objectID, curCaliber.hudName.c_str(), curCaliber.ammoTypes.count);
+	std::string dispStr;
+	dispStr.append("\n  [Crit Effect Tables](");
+	dispStr.append(std::to_string(ATCritEffectTables.count));
+	dispStr.append(")\n");
+	for (UInt32 i = 0; i < ATCritEffectTables.count; i++) {
+		ATCritEffectTable curCET = ATCritEffectTables[i];
+		dispStr.append("    ");
+		dispStr.append(std::to_string(curCET.objectID));
+		dispStr.append(" - ");
+		dispStr.append(curCET.hudName.c_str());
+		dispStr.append("\n");
 	}
+	_MESSAGE(dispStr.c_str());
+	dispStr.clear();
 
-	if (bEnableLog)
-		_MESSAGE("\n  [Crit Effect Tables] (%i):", CritEffectTables.count);
-
-	for (UInt32 i = 0; i < CritEffectTables.count; i++) {
-		ATCritEffectTable curCET = CritEffectTables[i];
-		//curCET.critEffects.capacity = curCET.critEffects.count;
-		if (bEnableLog) {
-			_MESSAGE("    0x%08X - %s : %i effects", curCET.objectID, curCET.hudName.c_str(), curCET.critEffects.count);
-			for (UInt32 j = 0; j < curCET.critEffects.count; j++) {
-				ATCritEffect tempSI = curCET.critEffects[j];
-				_MESSAGE("        %i: 0x%08X", j, (tempSI.critSpell != nullptr) ? tempSI.critSpell->formID : 0);
+	_MESSAGE("\n  [Weapons] (%i):", ATWeapons.count);
+	for (UInt32 i = 0; i < ATWeapons.count; i++) {
+		ATWeapon curWeap = ATWeapons[i];
+		dispStr.append("\n    0x%08X : ");
+		dispStr.append(curWeap.hudName.c_str());
+		dispStr.append("\n");
+		if (curWeap.calibers.count > 0) {
+			dispStr.append("      ");
+			dispStr.append(std::to_string(curWeap.calibers.count));
+			dispStr.append(" Calibers: ");
+			for (UInt32 j = 0; j < curWeap.calibers.count; j++) {
+				dispStr.append(std::to_string(j));
+				dispStr.append(" - ");
+				dispStr.append(curWeap.calibers[j].hudName.c_str());
+				dispStr.append(", ");
 			}
 		}
-	}
-
-	if (bEnableLog)
-		_MESSAGE("\n  [Crit Failure Tables] (%i):", CritFailureTables.count);
-
-	for (UInt32 i = 0; i < CritFailureTables.count; i++) {
-		ATCritEffectTable curCFT = CritFailureTables[i];
-		//curCFT.critEffects.capacity = curCFT.critEffects.count;
-		if (bEnableLog) {
-			_MESSAGE("    0x%08X - %s : %i effects", curCFT.objectID, curCFT.hudName.c_str(), curCFT.critEffects.count);
-			for (UInt32 j = 0; j < curCFT.critEffects.count; j++) {
-				ATCritEffect tempSI = curCFT.critEffects[j];
-				_MESSAGE("        %i: 0x%08X", j, (tempSI.critSpell != nullptr) ? tempSI.critSpell->formID : 0);
+		_MESSAGE(dispStr.c_str(), curWeap.objectID);
+		dispStr.clear();
+		_MESSAGE("     ModSlots:");
+		if (curWeap.modSlots.count > 0) {
+			for (UInt32 i = 0; i < curWeap.modSlots.count; i++) {
+				dispStr.append("\n      ");
+				dispStr.append(std::to_string(curWeap.modSlots[i].swappableMods.count));
+				dispStr.append(" ");
+				dispStr.append(curWeap.modSlots[i].slotName.c_str());
+				dispStr.append(": ");
+				for (UInt32 j = 0; j < curWeap.modSlots[i].swappableMods.count; j++) {
+					dispStr.append(std::to_string(j));
+					dispStr.append(" - ");
+					dispStr.append(curWeap.modSlots[i].swappableMods[j].swapMod->fullName.name.c_str());
+					dispStr.append(", ");
+				}
 			}
 		}
+		_MESSAGE(dispStr.c_str());
+		dispStr.clear();
+		if (curWeap.damagedModSlots.count > 0) {
+			_MESSAGE("     Damaged ModSlots:");
+			for (UInt32 i = 0; i < curWeap.damagedModSlots.count; i++) {
+				dispStr.append("\n      ");
+				dispStr.append(std::to_string(curWeap.damagedModSlots[i].damagedMods.count));
+				dispStr.append(" ");
+				dispStr.append(curWeap.damagedModSlots[i].slotName.c_str());
+				dispStr.append(": ");
+				for (UInt32 j = 0; j < curWeap.damagedModSlots[i].damagedMods.count; j++) {
+					dispStr.append(std::to_string(j));
+					dispStr.append(" - ");
+					dispStr.append(curWeap.damagedModSlots[i].damagedMods[j]->fullName.name.c_str());
+					dispStr.append(", ");
+				}
+			}
+		}
+		_MESSAGE(dispStr.c_str());
+		dispStr.clear();
 	}
-
-	if (bEnableLog)
-		_MESSAGE("\n  [Weapons] (%i):", Weapons.count);
-
-	for (UInt32 i = 0; i < Weapons.count; i++) {
-		ATWeapon curWeap = Weapons[i];
-		curWeap.modSlots.capacity = curWeap.modSlots.count;
-		curWeap.damagedMods.capacity = curWeap.damagedMods.count;
-		curWeap.magazines.capacity = curWeap.magazines.count;
-		curWeap.holsters.capacity = curWeap.holsters.count;
-
-		if (bEnableLog)
-			_MESSAGE("    0x%08X - %s : %i mod slots, %i damage slots, %i magazines, %i holsters", curWeap.objectID, curWeap.hudName.c_str(), curWeap.modSlots.count, curWeap.damagedMods.count, curWeap.magazines.count, curWeap.holsters.count);
-	}
-
-	bCheckPassed = true;
-
-	return bCheckPassed;
+	return true;
 }
 
-void ATConfig::LoadGameData()
-{
-	// seed the rng
-	srand(time(NULL));
 
+
+// loads everything needed for AmmoTweaks to function
+void ATGameData::LoadGameData()
+{
 	CSimpleIniA iniMain;
 	iniMain.SetUnicode();
+
+	// seed the RNG once
+	//	- nanoseconds since 01-01-1970 is probably overkill, but whatever....
+	ATUtilities::ATrng.Seed(std::chrono::high_resolution_clock::now().time_since_epoch().count());
 
 	// load global config
 	// - things that require a game restart to kick in
 	if (iniMain.LoadFile(".\\Data\\F4SE\\Plugins\\AmmoTweaks.ini") > -1) {
-
 		// load AmmoTweaks configuration data
-		// - anything not handled by the base game (caliber lists, swappable mods slots, crit tables, etc.)
 		const char *configDataPath = iniMain.GetValue("General", "sConfigFoldersPath", "");
 		if (configDataPath != "") {
-			bool bLoadStatTweaks = iniMain.GetBoolValue("Weapons", "bLoadStatTweaks", false);
-			bool bLoadTurrets = iniMain.GetBoolValue("Weapons", "bLoadTurrets", false);
-			bool bLoadThrownWeapons = iniMain.GetBoolValue("Weapons", "bLoadThrownWeapons", false);
-			bool bFollowerWeapons = iniMain.GetBoolValue("Weapons", "bFollowerWeapons", false);
-			bool bNPCsUseAmmo = iniMain.GetBoolValue("Weapons", "bNPCsUseAmmo", false);
+			bool bShowDebugInfo =	iniMain.GetBoolValue("General", "bShowDebugInfo", false);
+			bool bLoadedSomething = false;
 
-			_MESSAGE("\nLoading Framework Data...");
-
-			// try to load base framework data first
 			std::string tempDirStr;
-			const char *tempModName = "_Base";
-			tempDirStr.append(configDataPath);
-			tempDirStr.append(tempModName);
-			if (ATShared::ATData.LoadData_Plugin(tempDirStr, bLoadStatTweaks, bLoadTurrets, bLoadThrownWeapons, bFollowerWeapons, bNPCsUseAmmo)) {
-				// load per-plugin data
-				for (UInt32 i = 0; i < (*g_dataHandler)->modList.loadedMods.count; i++) {
-					tempDirStr.clear();
-					tempModName = (*g_dataHandler)->modList.loadedMods[i]->name;
+			const char * templateToLoad = "";
+
+			CSimpleIni::TNamesDepend templates;
+			if (iniMain.GetAllValues("General", "sTemplatesToLoad", templates)) {
+				
+				CSimpleIni::TNamesDepend::const_iterator i = templates.begin();
+				for (; i != templates.end(); ++i) {
+					templateToLoad = i->pItem;
+
+					_MESSAGE("\nLoading Template: %s...", templateToLoad);
+
 					tempDirStr.append(configDataPath);
-					tempDirStr.append(tempModName);
-					ATShared::ATData.LoadData_Plugin(tempDirStr, bLoadStatTweaks, bLoadTurrets, bLoadThrownWeapons, bFollowerWeapons, bNPCsUseAmmo);
+					tempDirStr.append(templateToLoad);
+					if (LoadData_Template(tempDirStr)) {
+						bLoadedSomething = true;
+					}
+					else
+						_MESSAGE("\n!!Unable to load template", templateToLoad);
+
+					tempDirStr.clear();
 				}
-
-				// finalize lists
-				if (ATShared::ATData.FinalizeData(true))
-					_MESSAGE("\nData check passed.\n");
-				else
-					_MESSAGE("\n!!Data check failed.\n");
 			}
-			else {
-				_MESSAGE("\n!!Unable to load _Base config.");
+
+			if (bLoadedSomething) {
+				_MESSAGE("\nAmmoTweaks data is ready.");
+				if (bShowDebugInfo) {
+					LogConfigData();
+				}
 			}
-			tempDirStr.clear();
-
-
-			// load MCM config stuff last
-			// - settings that can be edited while the game is running
-			//const char *configMCMPath = ".\\Data\\MCM\\Settings\\AmmoTweaks.ini";
-
-
 		}
-		else {
+		else
 			_MESSAGE("\n!!Unable to load config path.");
-		}
 	}
 
 }

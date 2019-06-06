@@ -1,30 +1,32 @@
 #include "ATShared.h"
-//#include <time.h>
+#include <string>
 
 
 
-//********************* weapon/caliber/crit tables cache
-
-namespace ATShared
+// cached data
+namespace ATGameData
 {
-	// global variables + weapon/caliber data
-	ATDataStore ATData;
+	tArray<ATWeapon> ATWeapons;
+	tArray<ATCritEffectTable> ATCritEffectTables;
+	tArray<ATCritEffectTable> ATCritFailureTables;
+	tArray<ATCraftingCategory> ATCraftingData;
+}
+
+namespace ATUtilities
+{
+	ATxoroshiro128p ATrng;
 }
 
 
-//*********************************************** Shared Functions:
+// ---------------- FormID/Identifier Utilities:
 
-//********************* FormID/Identifier:
-
-// returns a form's plugin's name
-const char* ATShared::GetPluginNameFromFormID(UInt32 formID)
+// returns a form's plugin name
+const char * ATUtilities::GetPluginNameFromFormID(UInt32 formID)
 {
-	char *modName = "none";
 	if (formID > 0x0) {
 		char varVal[9] = "00000000";
 		sprintf_s(varVal, 9, "%08X", formID);
 		std::string formStr = varVal;
-
 		std::string indexStr = formStr.substr(0, 2);
 
 		unsigned int modIndexInt = 0;
@@ -34,7 +36,7 @@ const char* ATShared::GetPluginNameFromFormID(UInt32 formID)
 
 		if (modIndex != 0xFF) {
 			(*g_dataHandler)->modList.loadedMods.GetNthItem(modIndex, tempMod);
-			modName = tempMod->name;
+			return tempMod->name;
 		}
 		else {
 			if (modIndex == 0xFE) {
@@ -45,144 +47,95 @@ const char* ATShared::GetPluginNameFromFormID(UInt32 formID)
 
 				if (lightIndex != 0xFF) {
 					(*g_dataHandler)->modList.lightMods.GetNthItem(lightIndex, tempMod);
-					modName = tempMod->name;
+					return tempMod->name;
 				}
 			}
 			else
-				modName = "References";
+				return "References";
 		}
 	}
-	return modName;
+	return "none";
 }
 
 // returns a formatted string containing (string=pluginName|UInt=formID without loadorder) 
-const char* ATShared::GetIdentifierFromFormID(UInt32 formID, const char* strSplit)
+const char * ATUtilities::GetIdentifierFromFormID(UInt32 formID)
 {
 	if (formID > 0x0) {
-		std::string *finalFormString = new std::string(GetPluginNameFromFormID(formID));
+		std::string finalFormString = GetPluginNameFromFormID(formID);
 		
 		char varVal[9] = "00000000";
 		sprintf_s(varVal, 9, "%08X", formID);
 		std::string tempFormString = varVal;
 		
-		finalFormString->append(strSplit);
-		finalFormString->append(tempFormString.substr(2));
+		finalFormString.append("|");
+		finalFormString.append(tempFormString.substr(2));
 
-		return finalFormString->c_str();
+		return finalFormString.c_str();
 	}
 	else
 		return "none";
 }
 
 // returns a formID from a formatted string
-UInt32 ATShared::GetFormIDFromIdentifier(const std::string & formIdentifier, const char* strSplit)
+UInt32 ATUtilities::GetFormIDFromIdentifier(const std::string & formIdentifier)
 {
-	UInt32 formId = 0x0;
+	UInt32 formId = 0;
 	if (formIdentifier.c_str() != "none") {
-		std::size_t pos = formIdentifier.find_first_of(strSplit);
-		std::string *modName = new std::string();
-		std::string *modForm = new std::string();
-		modName->append(formIdentifier.substr(0, pos));
-		modForm->append(formIdentifier.substr(pos + 1));
-		sscanf_s(modForm->c_str(), "%X", &formId);
+		std::size_t pos = formIdentifier.find_first_of("|");
+		std::string modName = formIdentifier.substr(0, pos);
+		std::string modForm = formIdentifier.substr(pos + 1);
+		sscanf_s(modForm.c_str(), "%X", &formId);
 
 		if (formId != 0x0) {
-			UInt8 modIndex = (*g_dataHandler)->GetLoadedModIndex(modName->c_str());
+			UInt8 modIndex = (*g_dataHandler)->GetLoadedModIndex(modName.c_str());
 			if (modIndex != 0xFF) {
 				formId |= ((UInt32)modIndex) << 24;
 			}
 			else {
-				UInt16 lightModIndex = (*g_dataHandler)->GetLoadedLightModIndex(modName->c_str());
+				UInt16 lightModIndex = (*g_dataHandler)->GetLoadedLightModIndex(modName.c_str());
 				if (lightModIndex != 0xFFFF) {
 					formId |= 0xFE000000 | (UInt32(lightModIndex) << 12);
+				}
+				else {
+					_MESSAGE("FormID %s not found!", formIdentifier.c_str());
+					formId = 0;
 				}
 			}
 		}
 	}
 	return formId;
-
 }
 
 // returns a form from a formatted string
-TESForm * ATShared::GetFormFromIdentifier(const std::string & formIdentifier, const char* strSplit)
+TESForm * ATUtilities::GetFormFromIdentifier(const std::string & formIdentifier)
 {
-	UInt32 formId = GetFormIDFromIdentifier(formIdentifier, strSplit);
-	if (formId > 0x0)
-		return LookupFormByID(formId);
-	else
-		return nullptr;
-}
-
-// reads a ValueModifier (ActorValue, amount) from the passed identifier string
-TBO_InstanceData::ValueModifier ATShared::GetAVModiferFromIdentifer(const std::string & formIdentifier)
-{
-	TBO_InstanceData::ValueModifier avMod;
-	if (formIdentifier.c_str() != "none") {
-		std::size_t pos = formIdentifier.find_first_of(", ");
-		std::string *avIdentifier = new std::string();
-		std::string *avValueStr = new std::string();
-		avIdentifier->append(formIdentifier.substr(0, pos));
-		avValueStr->append(formIdentifier.substr(pos + 2));
-
-		ActorValueInfo *newAV = (ActorValueInfo*)GetFormFromIdentifier(avIdentifier->c_str());
-		if (newAV) {
-			avMod.avInfo = newAV;
-			UInt32 newVal = std::stoi(*avValueStr);
-			avMod.unk08 = newVal;
-		}
-	}
-	return avMod;
-}
-
-// reads a TBO_InstanceData::DamageTypes (DamageType, amount) from the passed identifier string
-TBO_InstanceData::DamageTypes ATShared::GetDamageTypeFromIdentifier(const std::string & formIdentifier)
-{
-	TBO_InstanceData::DamageTypes tempDT;
-	if (formIdentifier.c_str() != "none") {
-		std::size_t pos = formIdentifier.find_first_of(", ");
-		std::string *avIdentifier = new std::string();
-		std::string *avValueStr = new std::string();
-		avIdentifier->append(formIdentifier.substr(0, pos));
-		avValueStr->append(formIdentifier.substr(pos + 2));
-
-		BGSDamageType *newDT = (BGSDamageType*)GetFormFromIdentifier(avIdentifier->c_str());
-		if (newDT) {
-			tempDT.damageType = newDT;
-			UInt32 newVal = std::stoi(*avValueStr);
-			tempDT.value = newVal;
-		}
-	}
-	return tempDT;
+	UInt32 formId = GetFormIDFromIdentifier(formIdentifier);
+	return (formId > 0x0) ? LookupFormByID(formId) : nullptr;
 }
 
 // reads an ATCritTableBase::CritEffect (Spell, max. roll value) from the passed identifier string
-ATCritEffect ATShared::GetCritEffectFromIdentifier(const std::string & formIdentifier)
+bool ATUtilities::GetCritEffectFromIdentifier(const std::string & formIdentifier, ATCritEffect & tempEffect)
 {
-	ATCritEffect critEffect;
 	if (formIdentifier.c_str() != "none") {
 		std::size_t pos = formIdentifier.find_first_of(", ");
-		std::string *spellIdentifier = new std::string();
-		std::string *spellValueStr = new std::string();
-		spellIdentifier->append(formIdentifier.substr(0, pos));
-		spellValueStr->append(formIdentifier.substr(pos + 2));
-
-		SpellItem *newSpell = (SpellItem*)GetFormFromIdentifier(spellIdentifier->c_str());
-		if (newSpell) {
-			critEffect.critSpell = newSpell;
-		}
-		critEffect.rollMax = std::stoi(*spellValueStr);
+		std::string spellIdentifier = formIdentifier.substr(0, pos);
+		std::string spellValueStr = formIdentifier.substr(pos + 2);
+		
+		tempEffect.critSpell = (SpellItem*)GetFormFromIdentifier(spellIdentifier.c_str());
+		tempEffect.rollMax = std::stoi(spellValueStr);
+		return true;
 	}
-	return critEffect;
+	return false;
 }
 
 
 //********************* Weapon instanceData:
 
 // returns the instanceData of a passed weapon reference
-TESObjectWEAP::InstanceData *ATShared::GetWeapRefInstanceData(VMRefOrInventoryObj *curObj)
+TESObjectWEAP::InstanceData * ATUtilities::GetWeapRefInstanceData(VMRefOrInventoryObj * curObj)
 {
 	if (curObj) {
-		TESObjectREFR *tempRef = curObj->GetObjectReference();
+		TESObjectREFR * tempRef = curObj->GetObjectReference();
 		// only allow weapons with objectreferences
 		if (tempRef) {
 			if (tempRef->extraDataList) {
@@ -203,19 +156,19 @@ TESObjectWEAP::InstanceData *ATShared::GetWeapRefInstanceData(VMRefOrInventoryOb
 }
 
 // returns an actor's equipped weapon form
-TESObjectWEAP *ATShared::GetEquippedWeapon(Actor *thisActor, UInt32 iSlot)
+TESObjectWEAP * ATUtilities::GetEquippedWeapon(Actor * ownerActor, UInt32 iEquipSlot)
 {
-	if (thisActor) {
+	if (ownerActor) {
 		// Invalid slot id
-		if (iSlot >= ActorEquipData::kMaxSlots)
+		if (iEquipSlot >= ActorEquipData::kMaxSlots)
 			return nullptr;
 
-		ActorEquipData * equipData = thisActor->equipData;
+		ActorEquipData * equipData = ownerActor->equipData;
 		if (!equipData)
 			return nullptr;
 
 		// Make sure there is an item in this slot
-		TESForm *item = equipData->slots[iSlot].item;
+		TESForm *item = equipData->slots[iEquipSlot].item;
 		if (!item)
 			return nullptr;
 
@@ -225,41 +178,41 @@ TESObjectWEAP *ATShared::GetEquippedWeapon(Actor *thisActor, UInt32 iSlot)
 }
 
 // returns the instanceData of thisActor's weapon equipped at slot iSlot
-TESObjectWEAP::InstanceData *ATShared::GetEquippedInstanceData(Actor *thisActor, UInt32 iSlot)
+TESObjectWEAP::InstanceData * ATUtilities::GetEquippedInstanceData(Actor * ownerActor, UInt32 iEquipSlot)
 {
-	if (thisActor) {
+	if (ownerActor) {
 		// Invalid slot id
-		if (iSlot >= ActorEquipData::kMaxSlots)
+		if (iEquipSlot >= ActorEquipData::kMaxSlots)
 			return nullptr;
 
-		ActorEquipData * equipData = thisActor->equipData;
+		ActorEquipData * equipData = ownerActor->equipData;
 		if (!equipData)
 			return nullptr;
 
 		// Make sure there is an item in this slot
-		auto item = equipData->slots[iSlot].item;
+		auto item = equipData->slots[iEquipSlot].item;
 		if (!item)
 			return nullptr;
 
-		return (TESObjectWEAP::InstanceData*)Runtime_DynamicCast(equipData->slots[iSlot].instanceData, RTTI_TBO_InstanceData, RTTI_TESObjectWEAP__InstanceData);
+		return (TESObjectWEAP::InstanceData*)Runtime_DynamicCast(equipData->slots[iEquipSlot].instanceData, RTTI_TBO_InstanceData, RTTI_TESObjectWEAP__InstanceData);
 	}
 	return nullptr;
 }
 
 // returns the FormID of thisActor's weapon equipped at slot iSlot
-UInt32 ATShared::GetEquippedItemFormID(Actor *thisActor, UInt32 iSlot)
+UInt32 ATUtilities::GetEquippedItemFormID(Actor * ownerActor, UInt32 iEquipSlot)
 {
-	if (thisActor) {
+	if (ownerActor) {
 		// Invalid slot id
-		if (iSlot >= ActorEquipData::kMaxSlots)
+		if (iEquipSlot >= ActorEquipData::kMaxSlots)
 			return 0x0;
 
-		ActorEquipData * equipData = thisActor->equipData;
+		ActorEquipData * equipData = ownerActor->equipData;
 		if (!equipData)
 			return 0x0;
 
 		// Make sure there is an item in this slot
-		TESForm *item = equipData->slots[iSlot].item;
+		TESForm *item = equipData->slots[iEquipSlot].item;
 		if (!item)
 			return 0x0;
 
@@ -268,137 +221,129 @@ UInt32 ATShared::GetEquippedItemFormID(Actor *thisActor, UInt32 iSlot)
 	return 0x0;
 }
 
+
+
+// --------- data cache interactions:
+
+// ---- ATWeapon:
+
+int ATGameData::GetWeaponIndex(UInt32 formID)
+{
+	for (UInt32 i = 0; i < ATWeapons.count; i++) {
+		if (ATWeapons[i].objectID == formID) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+bool ATGameData::GetWeaponByID(UInt32 formID, ATWeapon & weaponData)
+{
+	for (UInt32 i = 0; i < ATWeapons.count; i++) {
+		if (ATWeapons[i].objectID == formID) {
+			weaponData = ATWeapons[i];
+			return true;
+		}
+	}
+	return false;
+}
+
 // returns the weapon's equipped caliber keyword
-BGSKeyword* ATShared::GetInstanceCaliber(TESObjectWEAP::InstanceData *instanceData)
+bool ATWeapon::GetInstanceCaliber(TESObjectWEAP::InstanceData * instanceData, ATCaliber & thisCaliber)
 {
 	if (instanceData) {
 		if (instanceData->keywords) {
-			for (UInt8 j = 0; j < instanceData->keywords->numKeywords; j++) {
-				if (instanceData->keywords->keywords[j]) {
-					UInt32 tempCaliberKW = instanceData->keywords->keywords[j]->formID;
-					if (ATShared::ATData.GetCaliberIndex(tempCaliberKW) > -1) {
-						return (BGSKeyword*)LookupFormByID(tempCaliberKW);
+			BGSKeyword *caliberKW = nullptr;
+			//_MESSAGE("ID: 0x%08x  Caliber count: - %i", objectID, calibers.count);
+			for (UInt32 j = 0; j < instanceData->keywords->numKeywords; j++) {
+				caliberKW = instanceData->keywords->keywords[j];
+				if (caliberKW) {
+					if (GetCaliberDataByID(caliberKW->formID, thisCaliber)) {
+						return true;
 					}
 				}
 			}
 		}
 	}
-	return nullptr;
+	return false;
 }
 
-
-//********************* Custom Classes:
-
-// --------- ATCritEffectTable:
-
-SpellItem *ATCritEffectTable::GetCritSpell(UInt32 iRollMod, UInt32 iTargetType)
+int ATWeapon::GetCaliberDataIndex(UInt32 formID)
 {
-	int iRoll = (rand() % 86) + iRollMod;
-
-	if ((iTargetType == 1) && (critEffects_Human.count > 0)) {
-		for (UInt32 i = 0; i < critEffects_Human.count; i++) {
-			ATCritEffect newEffect = critEffects_Human[i];
-			if (iRoll < newEffect.rollMax) {
-				return newEffect.critSpell;
-			}
+	for (UInt32 i = 0; i < calibers.count; i++) {
+		if (calibers[i].objectID == formID) {
+			return i;
 		}
 	}
-	else if ((iTargetType == 2) && (critEffects_Robot.count > 0)) {
-		for (UInt32 i = 0; i < critEffects_Robot.count; i++) {
-			ATCritEffect newEffect = critEffects_Robot[i];
-			if (iRoll < newEffect.rollMax) {
-				return newEffect.critSpell;
-			}
-		}
-	}
-	else {
-		
-		for (UInt32 i = 0; i < critEffects.count; i++) {
-			ATCritEffect newEffect = critEffects[i];
-			if (iRoll < newEffect.rollMax) {
-				return newEffect.critSpell;
-			}
-		}
-	}
-	return nullptr;
+	return -1;
 }
 
-
-// --------- ATCritFailureTable:
-
-SpellItem *ATCritEffectTable::GetCritFailureSpell(UInt32 iRollMod, UInt32 iLuck)
+bool ATWeapon::GetCaliberDataByID(UInt32 formID, ATCaliber & caliberData)
 {
-	int iRoll = ((rand() % 101) + iRollMod) - (7 * (iLuck - 7));
-	
-	for (UInt32 i = 0; i < critEffects.count; i++) {
-		ATCritEffect newEffect = critEffects[i];
-		if (iRoll < newEffect.rollMax) {
-			return newEffect.critSpell;
+	for (UInt32 i = 0; i < calibers.count; i++) {
+		if (calibers[i].objectID == formID) {
+			caliberData = calibers[i];
+			return true;
 		}
 	}
-	
-	return nullptr;
+	return false;
 }
 
-
-// --------- ATWeapon:
-
-BGSMod::Attachment::Mod *ATWeapon::GetDamagedMod(Actor *thisActor, UInt32 iEquipSlot, int iSlot)
+BGSMod::Attachment::Mod * ATWeapon::GetDamagedMod(Actor * ownerActor, UInt32 iEquipSlot, int iModSlot)
 {
-	TESObjectWEAP::InstanceData *instanceData = ATShared::GetEquippedInstanceData(thisActor, iEquipSlot);
-	ActorEquipData * equipData = thisActor->equipData;
-	if (equipData) {
-		auto data = equipData->slots[iEquipSlot].extraData->data;
-		
+	if (damagedModSlots.count > 0) {
+		TESObjectWEAP::InstanceData * instanceData = ATUtilities::GetEquippedInstanceData(ownerActor, iEquipSlot);
 		if (instanceData) {
-			if (damagedMods.count > iSlot) {
-				if (iSlot < 0) {
-					iSlot = rand() % damagedMods.count;
-				}
+			ActorEquipData * equipData = ownerActor->equipData;
+			if (equipData) {
+				BGSObjectInstanceExtra::Data * data = equipData->slots[iEquipSlot].extraData->data;
+				if (data) {
+					if (iModSlot < 0) {
+						iModSlot = ATUtilities::ATrng.RandomInt(0, damagedModSlots.count - 1);
+					}
+					_MESSAGE("Damaged Mod Slot: %i", iModSlot);
 
-				ModSlot tempSlot;
-				if (damagedMods.GetNthItem(iSlot, tempSlot)) {
-					if (tempSlot.swappableMods.count > 0) {
-						int iIndex = 0;
-						if (tempSlot.swappableMods.count > 1) {
-							iIndex = rand() % tempSlot.swappableMods.count;
-						}
+					if (damagedModSlots.count > iModSlot) {
+						ATDamagedModSlot tempSlot = damagedModSlots[iModSlot];
+						if (tempSlot.damagedMods.count > 0) {
+							UInt32 dataSize = data->blockSize / sizeof(BGSObjectInstanceExtra::Data::Form);
 
-						ATSwappableMod tempMod;
-						if (tempSlot.swappableMods.GetNthItem(iIndex, tempMod)) {
-							if (instanceData->keywords) {
-								bool bAllow = false;
+							bool bAllow = false;
+							BGSMod::Attachment::Mod * objectMod = nullptr;
 
-								if (tempMod.requiredKW) {
-									for (UInt8 i = 0; i < instanceData->keywords->numKeywords; i++) {
-										if (instanceData->keywords->keywords[i] == tempMod.requiredKW) {
+							for (UInt32 i = 0; i < tempSlot.damagedMods.count; i++) {
+								if (bAllow) {
+									_MESSAGE("picked damaged mod: %s", tempSlot.damagedMods[i]->fullName.name.c_str());
+									return tempSlot.damagedMods[i];
+								}
+								else {
+									for (UInt32 j = 0; j < dataSize; j++) {
+										objectMod = (BGSMod::Attachment::Mod*)Runtime_DynamicCast(LookupFormByID(data->forms[j].formId), RTTI_TESForm, RTTI_BGSMod__Attachment__Mod);
+										if (tempSlot.damagedMods[i] == objectMod) {
 											bAllow = true;
 											break;
 										}
 									}
 								}
-								else {
-									bAllow = true;
+							}
+
+							if (bAllow) {
+								_MESSAGE("worst damaged mod already equipped for slot %i", iModSlot);
+							}
+							else {
+								
+								if (tempSlot.damagedMods.count > 0) {
+									_MESSAGE("no damaged mod found at slot %i, attaching default mod...", iModSlot);
+									return tempSlot.damagedMods[0];
 								}
-
-								// equipped mod check
-								if (bAllow) {
-									if (data) {
-										for (UInt32 j = 0; j < data->blockSize / sizeof(BGSObjectInstanceExtra::Data::Form); j++) {
-											BGSMod::Attachment::Mod * objectMod = (BGSMod::Attachment::Mod *)Runtime_DynamicCast(LookupFormByID(data->forms[j].formId), RTTI_TESForm, RTTI_BGSMod__Attachment__Mod);
-											if (tempMod.swapMod == objectMod) {
-												bAllow = false;
-												break;
-											}
-										}
-									}
-
-									if (bAllow) {
-										return tempMod.swapMod;
-									}
+								else {
+									_MESSAGE("no damaged mods found at slot %i", iModSlot);
 								}
 							}
 						}
+					}
+					else {
+						_MESSAGE("Not enough damaged mod slots... count: %i, slot: %i", damagedModSlots.count, iModSlot);
 					}
 				}
 			}
@@ -408,54 +353,12 @@ BGSMod::Attachment::Mod *ATWeapon::GetDamagedMod(Actor *thisActor, UInt32 iEquip
 }
 
 
-// --------- ATDataStore:
+// ---- ATCritEffectTables:
 
-int ATDataStore::GetWeaponIndex(UInt32 formID)
+int ATGameData::GetCritTableIndex(UInt32 formID)
 {
-	for (UInt32 i = 0; i < Weapons.count; i++) {
-		if (Weapons[i].objectID == formID) {
-			return (int)i;
-		}
-	}
-	return -1;
-}
-bool ATDataStore::GetWeaponByID(UInt32 formID, ATWeapon weaponData)
-{
-	for (UInt32 i = 0; i < Weapons.count; i++) {
-		if (Weapons[i].objectID == formID) {
-			weaponData = Weapons[i];
-			return true;
-		}
-	}
-	return false;
-}
-
-
-int ATDataStore::GetCaliberIndex(UInt32 formID)
-{
-	for (UInt32 i = 0; i < Calibers.count; i++) {
-		if (Calibers[i].objectID == formID) {
-			return (int)i;
-		}
-	}
-	return -1;
-}
-bool ATDataStore::GetCaliberByID(UInt32 formID, ATCaliber caliberData)
-{
-	for (UInt32 i = 0; i < Calibers.count; i++) {
-		if (Calibers[i].objectID == formID) {
-			caliberData = Calibers[i];
-			return true;
-		}
-	}
-	return false;
-}
-
-
-int ATDataStore::GetCritTableIndex(UInt32 formID)
-{
-	for (UInt32 n = 0; n < CritEffectTables.count; n++) {
-		ATCritEffectTable tempTable = CritEffectTables[n];
+	for (UInt32 n = 0; n < ATCritEffectTables.count; n++) {
+		ATCritEffectTable tempTable = ATCritEffectTables[n];
 		if (tempTable.objectID == formID) {
 			return (int)n;
 		}
@@ -463,24 +366,46 @@ int ATDataStore::GetCritTableIndex(UInt32 formID)
 	return -1;
 }
 
-int ATDataStore::GetCritFailTableIndex(UInt32 formID)
+bool ATGameData::GetCritTableByID(UInt32 formID, ATCritEffectTable & critTable)
 {
-	for (UInt32 n = 0; n < CritFailureTables.count; n++) {
-		ATCritEffectTable tempTable = CritFailureTables[n];
-		if (tempTable.objectID == formID) {
-			return (int)n;
+	for (UInt32 i = 0; i < ATCritEffectTables.count; i++) {
+		if (ATCritEffectTables[i].objectID == formID) {
+			critTable = ATCritEffectTables[i];
+			return true;
 		}
 	}
-	return -1;
+	return false;
 }
 
-
-//********************* Papyrus:
-
-// registers native functions
-void ATShared::RegisterPapyrus(VirtualMachine * vm)
+SpellItem * ATCritEffectTable::GetCritSpell(UInt32 iRollMod, UInt32 iRaceID)
 {
-	_MESSAGE("\nRegistering Papyrus functions....");
-	ATGlobals::RegisterPapyrus(vm);
-	ATWeaponRef::RegisterPapyrus(vm);
+	int iRoll = ATUtilities::ATrng.RandomInt(0, 85 + iRollMod);
+
+	if ((iRaceID > 0) && (critVariations.count > 0)) {
+		for (UInt32 i = 0; i < critVariations.count; i++) {
+			ATCritEffectTable::AltCritTable tempCritVar = critVariations[i];
+			if (tempCritVar.critRaces.GetItemIndex(iRaceID) > -1) {
+				for (UInt32 j = 0; j < tempCritVar.critEffects.count; j++) {
+					if (iRoll < tempCritVar.critEffects[j].rollMax) {
+						if (tempCritVar.critEffects[j].critSpell) {
+							_MESSAGE("Critical Effect: %s, Race: 0x%08X", tempCritVar.critEffects[j].critSpell->name.name.c_str(), iRaceID);
+						}
+						return tempCritVar.critEffects[j].critSpell;
+					}
+				}
+			}
+		}
+	}
+
+	for (UInt32 i = 0; i < defaultEffects.count; i++) {
+		if (iRoll < defaultEffects[i].rollMax) {
+			if (defaultEffects[i].critSpell) {
+				_MESSAGE("Critical Effect: %s", defaultEffects[i].critSpell->name.name.c_str());
+			}
+			return defaultEffects[i].critSpell;
+		}
+	}
+
+	return nullptr;
 }
+

@@ -3,27 +3,26 @@
 #define SCRIPTNAME "AT:Globals"
 
 
-
 namespace ATGlobals
 {
 	// *********************** Equipped Weapon Info
 
-	BSFixedString GetEquippedWeapName(StaticFunctionTag*, Actor *thisActor, UInt32 iSlot = 41)
+	BSFixedString GetEquippedWeapName(StaticFunctionTag*, Actor * thisActor, UInt32 iSlot = 41)
 	{
 		if (thisActor) {
-			UInt32 weapID = ATShared::GetEquippedItemFormID(thisActor, iSlot);
+			UInt32 weapID = ATUtilities::GetEquippedItemFormID(thisActor, iSlot);
 			ATWeapon tempWeap;
-			if (ATShared::ATData.GetWeaponByID(weapID, tempWeap)) {
+			if (ATGameData::GetWeaponByID(weapID, tempWeap)) {
 				return tempWeap.hudName;
 			}
 		}
 		return BSFixedString("");
 	}
 
-	UInt32 GetEquippedAttackDamage(StaticFunctionTag*, Actor *tempActor, UInt32 iSlot = 41)
+	UInt32 GetEquippedAttackDamage(StaticFunctionTag*, Actor * tempActor, UInt32 iSlot = 41)
 	{
 		if (tempActor) {
-			TESObjectWEAP::InstanceData *instanceData = ATShared::GetEquippedInstanceData(tempActor, iSlot);
+			TESObjectWEAP::InstanceData * instanceData = ATUtilities::GetEquippedInstanceData(tempActor, iSlot);
 			if (instanceData) {
 				if (instanceData->baseDamage >= 0)
 					return (UInt32)instanceData->baseDamage;
@@ -35,10 +34,10 @@ namespace ATGlobals
 		return 0;
 	}
 
-	float GetEquippedCritChargeMult(StaticFunctionTag*, Actor *tempActor, UInt32 iSlot = 41)
+	float GetEquippedCritChargeMult(StaticFunctionTag*, Actor * tempActor, UInt32 iSlot = 41)
 	{
 		if (tempActor) {
-			TESObjectWEAP::InstanceData *instanceData = ATShared::GetEquippedInstanceData(tempActor, iSlot);
+			TESObjectWEAP::InstanceData * instanceData = ATUtilities::GetEquippedInstanceData(tempActor, iSlot);
 			if (instanceData) {
 				return instanceData->critChargeBonus;
 			}
@@ -46,10 +45,10 @@ namespace ATGlobals
 		return 0.0;
 	}
 
-	float GetEquippedWeight(StaticFunctionTag*, Actor *tempActor, UInt32 iSlot = 41)
+	float GetEquippedWeight(StaticFunctionTag*, Actor * tempActor, UInt32 iSlot = 41)
 	{
 		if (tempActor) {
-			TESObjectWEAP::InstanceData *instanceData = ATShared::GetEquippedInstanceData(tempActor, iSlot);
+			TESObjectWEAP::InstanceData * instanceData = ATUtilities::GetEquippedInstanceData(tempActor, iSlot);
 			if (instanceData) {
 				return instanceData->weight;
 			}
@@ -57,12 +56,12 @@ namespace ATGlobals
 		return 0.0;
 	}
 
-	ActorValueInfo* GetEquippedReqSkill(StaticFunctionTag*, Actor *ownerActor, UInt32 iSlot = 41)
+	ActorValueInfo * GetEquippedReqSkill(StaticFunctionTag*, Actor * ownerActor, UInt32 iSlot = 41)
 	{
 		if (ownerActor) {
-			UInt32 weapID = ATShared::GetEquippedItemFormID(ownerActor, iSlot);
+			UInt32 weapID = ATUtilities::GetEquippedItemFormID(ownerActor, iSlot);
 			ATWeapon tempWeap;
-			if (ATShared::ATData.GetWeaponByID(weapID, tempWeap)) {
+			if (ATGameData::GetWeaponByID(weapID, tempWeap)) {
 				return tempWeap.requiredSkill;
 			}
 		}
@@ -73,32 +72,46 @@ namespace ATGlobals
 	// -------- Caliber/AmmoType
 
 	// returns the equipped weapon's caliber keyword
-	BGSKeyword* GetEquippedCaliber(StaticFunctionTag*, Actor *tempActor, UInt32 iSlot = 41)
+	BGSKeyword * GetEquippedCaliber(StaticFunctionTag*, Actor * ownerActor, UInt32 iEquipSlot = 41)
 	{
-		if (tempActor) {
-			TESObjectWEAP::InstanceData *instanceData = ATShared::GetEquippedInstanceData(tempActor, iSlot);
+		if (ownerActor) {
+			TESObjectWEAP::InstanceData * instanceData = ATUtilities::GetEquippedInstanceData(ownerActor, iEquipSlot);
 			if (instanceData) {
-				return ATShared::GetInstanceCaliber(instanceData);
+				TESObjectWEAP * curWeapon = ATUtilities::GetEquippedWeapon(ownerActor, iEquipSlot);
+				if (curWeapon) {
+					ATWeapon tempWeap;
+					if (ATGameData::GetWeaponByID(curWeapon->formID, tempWeap)) {
+						ATCaliber tempCaliber;
+						if (tempWeap.GetInstanceCaliber(instanceData, tempCaliber)) {
+							BGSKeyword * tempKW = ((int)tempCaliber.objectID > 0) ? (BGSKeyword*)LookupFormByID(tempCaliber.objectID) : nullptr;
+							return tempKW;
+						}
+					}
+				}
 			}
 		}
 		return nullptr;
 	}
 
 	// returns the index of the equipped ammo type in the caliber's ammo list
-	UInt32 GetEquippedAmmoIndex(StaticFunctionTag*, BGSKeyword *curCaliber, Actor *tempActor, UInt32 iSlot = 41)
+	UInt32 GetEquippedAmmoIndex(StaticFunctionTag*, BGSKeyword * curCaliber, Actor * ownerActor, UInt32 iEquipSlot = 41)
 	{
-		if (curCaliber && tempActor) {
-			TESObjectWEAP::InstanceData *instanceData = ATShared::GetEquippedInstanceData(tempActor, iSlot);
+		if (curCaliber && ownerActor) {
+			TESObjectWEAP::InstanceData * instanceData = ATUtilities::GetEquippedInstanceData(ownerActor, iEquipSlot);
 			if (instanceData) {
-				if (instanceData->ammo) {
-					ATCaliber tempCaliber;
-					if (ATShared::ATData.GetCaliberByID(curCaliber->formID, tempCaliber)) {
-						if (tempCaliber.ammoTypes.count > 0) {
-							TESAmmo *tempAmmo = nullptr;
-							for (UInt8 i = 0; i < tempCaliber.ammoTypes.count; i++) {
-								tempAmmo = (TESAmmo*)tempCaliber.ammoTypes[i].modItem;
-								if (instanceData->ammo == tempAmmo) {
-									return i;
+				TESObjectWEAP * curWeapon = ATUtilities::GetEquippedWeapon(ownerActor, iEquipSlot);
+				if (curWeapon) {
+					ATWeapon tempWeap;
+					if (ATGameData::GetWeaponByID(curWeapon->formID, tempWeap)) {
+						ATCaliber tempCaliber;
+						if (tempWeap.GetCaliberDataByID(curCaliber->formID, tempCaliber)) {
+							if (tempCaliber.ammoTypes.count > 0) {
+								for (UInt8 i = 0; i < tempCaliber.ammoTypes.count; i++) {
+									if (tempCaliber.ammoTypes[i].ammoItem) {
+										if (instanceData->ammo == tempCaliber.ammoTypes[i].ammoItem) {
+											return i;
+										}
+									}
 								}
 							}
 						}
@@ -109,115 +122,125 @@ namespace ATGlobals
 		return -1;
 	}
 
-	// returns the equipped ammo mod's name (for the HUD widget)
-	BSFixedString GetEquippedAmmoName(StaticFunctionTag*, BGSKeyword *curCaliber, Actor *tempActor, UInt32 iSlot = 41)
+	// returns the index of the equipped ammo type in the caliber's ammo list
+	BSFixedString GetEquippedAmmoName(StaticFunctionTag*, BGSKeyword * curCaliber, Actor * ownerActor, UInt32 iEquipSlot = 41)
 	{
-		if (curCaliber && tempActor) {
-			TESObjectWEAP::InstanceData *instanceData = ATShared::GetEquippedInstanceData(tempActor, iSlot);
-
+		if (curCaliber && ownerActor) {
+			TESObjectWEAP::InstanceData * instanceData = ATUtilities::GetEquippedInstanceData(ownerActor, iEquipSlot);
 			if (instanceData) {
 				if (instanceData->ammo) {
-					ATCaliber tempCaliber;
-					if (ATShared::ATData.GetCaliberByID(curCaliber->formID, tempCaliber)) {
-						if (tempCaliber.ammoTypes.count > 0) {
-							TESAmmo *tempAmmo = nullptr;
-							for (UInt8 i = 0; i < tempCaliber.ammoTypes.count; i++) {
-								ATCaliber::AmmoType tempAmmoType = tempCaliber.ammoTypes[i];
-								tempAmmo = (TESAmmo*)tempAmmoType.modItem;
-								if (instanceData->ammo == tempAmmo) {
-									return tempAmmoType.swapMod->fullName.name;
+					TESObjectWEAP * curWeapon = ATUtilities::GetEquippedWeapon(ownerActor, iEquipSlot);
+					if (curWeapon) {
+						ATWeapon tempWeap;
+						if (ATGameData::GetWeaponByID(curWeapon->formID, tempWeap)) {
+							ATCaliber tempCaliber;
+							if (tempWeap.GetCaliberDataByID(curCaliber->formID, tempCaliber)) {
+								if (tempCaliber.ammoTypes.count > 0) {
+									for (UInt8 i = 0; i < tempCaliber.ammoTypes.count; i++) {
+										if (tempCaliber.ammoTypes[i].ammoItem) {
+											if (instanceData->ammo == tempCaliber.ammoTypes[i].ammoItem) {
+												return tempCaliber.ammoTypes[i].ammoItem->fullName.name;
+											}
+										}
+									}
 								}
 							}
-							return instanceData->ammo->fullName.name;
 						}
 					}
+					return instanceData->ammo->fullName.name;
 				}
 			}
 		}
-		return BSFixedString("");
+		return "";
 	}
 
 	// returns the number of ammo subtypes for this caliber
-	UInt32 GetNumAmmoTypesForCaliber(StaticFunctionTag*, BGSKeyword *curCaliber)
+	UInt32 GetNumAmmoTypesForCaliber(StaticFunctionTag*, TESObjectWEAP * curWeapon, BGSKeyword * curCaliber)
 	{
-		if (curCaliber) {
-			ATCaliber tempCaliber;
-			if (ATShared::ATData.GetCaliberByID(curCaliber->formID, tempCaliber)) {
-				return tempCaliber.ammoTypes.count;
+		if (curWeapon && curCaliber) {
+			ATWeapon tempWeap;
+			if (ATGameData::GetWeaponByID(curWeapon->formID, tempWeap)) {
+				ATCaliber tempCaliber;
+				if (tempWeap.GetCaliberDataByID(curCaliber->formID, tempCaliber)) {
+					return tempCaliber.ammoTypes.count;
+				}
 			}
 		}
 		return 0;
 	}
 
 	// updates input arrays with data needed by the ammo selection menu
-	bool GetHUDDataForCaliber(StaticFunctionTag*, Actor *ownerActor, BGSKeyword *curCaliber, VMArray<BSFixedString> modNames, VMArray<BSFixedString> modDescriptions, VMArray<UInt32> modItemCounts, VMArray<bool> modAllowedList)
+	bool GetHUDDataForCaliber(StaticFunctionTag*, Actor * ownerActor, TESObjectWEAP * curWeapon, BGSKeyword * curCaliber, VMArray<BSFixedString> modNames, VMArray<BSFixedString> modDescriptions, VMArray<UInt32> modItemCounts, VMArray<bool> modAllowedList)
 	{
-		if (ownerActor && curCaliber) {
-			ATCaliber tempCaliber;
-			if (ATShared::ATData.GetCaliberByID(curCaliber->formID, tempCaliber)) {
-				if (tempCaliber.ammoTypes.count > 0) {
-					for (UInt32 i = 0; i < tempCaliber.ammoTypes.count; i++) {
-						ATCaliber::AmmoType tempAmmo = tempCaliber.ammoTypes[i];
+		if (curWeapon && ownerActor && curCaliber) {
+			ATWeapon tempWeap;
+			if (ATGameData::GetWeaponByID(curWeapon->formID, tempWeap)) {
+				ATCaliber tempCaliber;
+				if (tempWeap.GetCaliberDataByID(curCaliber->formID, tempCaliber)) {
+					if (tempCaliber.ammoTypes.count > 0) {
+						for (UInt32 i = 0; i < tempCaliber.ammoTypes.count; i++) {
+							ATCaliber::AmmoType tempAmmo = tempCaliber.ammoTypes[i];
 
-						// ammo name
-						if (tempAmmo.modItem) {
-							BSFixedString modName = BSFixedString(tempAmmo.modItem->GetFullName());
-							modNames.Set(&modName, i);
-						}
+							// ammo name
+							if (tempAmmo.ammoItem) {
+								BSFixedString modName = BSFixedString(tempAmmo.ammoItem->GetFullName());
+								modNames.Set(&modName, i);
+							}
 
-						// ammo description
-						BSString str;
-						CALL_MEMBER_FN(&tempAmmo.swapMod->description, Get)(&str, nullptr);
-						BSFixedString modDescStr = BSFixedString(str.Get());
-						modDescriptions.Set(&modDescStr, i);
+							// ammo description
+							BSString str;
+							CALL_MEMBER_FN(&tempAmmo.ammoMod->description, Get)(&str, nullptr);
+							BSFixedString modDescStr = BSFixedString(str.Get());
+							modDescriptions.Set(&modDescStr, i);
 
-						// ammo count
-						UInt32 itemCount = 0;
-						if (tempAmmo.modItem) {
-							if (ownerActor->inventoryList) {
-								for (UInt32 j = 0; j < ownerActor->inventoryList->items.count; j++) {
-									BGSInventoryItem inventoryItem;
-									ownerActor->inventoryList->items.GetNthItem(j, inventoryItem);
-									if (inventoryItem.form == tempAmmo.modItem) {
-										if (inventoryItem.stack)
-											itemCount = inventoryItem.stack->count;
-										else
-											itemCount = 1;
-										break;
+							// ammo count
+							UInt32 itemCount = 0;
+							if (tempAmmo.ammoItem) {
+								if (ownerActor->inventoryList) {
+									for (UInt32 j = 0; j < ownerActor->inventoryList->items.count; j++) {
+										BGSInventoryItem inventoryItem;
+										ownerActor->inventoryList->items.GetNthItem(j, inventoryItem);
+										if (inventoryItem.form->formID == tempAmmo.ammoItem->formID) {
+											if (inventoryItem.stack)
+												itemCount = inventoryItem.stack->count;
+											else
+												itemCount = 1;
+											break;
+										}
 									}
 								}
 							}
-						}
-						else {
-							itemCount = 0;
-						}
-						modItemCounts.Set(&itemCount, i);
+							else {
+								itemCount = 0;
+							}
+							modItemCounts.Set(&itemCount, i);
 
-						// misc item check - could be used to require tools, etc. for some ammo types
-						bool bAllowed = false;
-						TESObjectMISC *modMiscItem = nullptr;
-						auto pair = g_modAttachmentMap->Find(&tempAmmo.swapMod);
-						if (pair) {
-							modMiscItem = pair->miscObject;
-						}
-						if (modMiscItem) {
-							if (ownerActor->inventoryList) {
-								for (UInt32 j = 0; j < ownerActor->inventoryList->items.count; j++) {
-									BGSInventoryItem inventoryItem;
-									ownerActor->inventoryList->items.GetNthItem(j, inventoryItem);
-									if (inventoryItem.form == modMiscItem) {
-										bAllowed = true;
-										break;
+							// misc item check - could be used to require tools, etc. for some ammo types
+							bool bAllowed = false;
+							TESObjectMISC * modMiscItem = nullptr;
+							auto pair = g_modAttachmentMap->Find(&tempAmmo.ammoMod);
+							if (pair) {
+								modMiscItem = pair->miscObject;
+							}
+							if (modMiscItem) {
+								if (ownerActor->inventoryList) {
+									for (UInt32 j = 0; j < ownerActor->inventoryList->items.count; j++) {
+										BGSInventoryItem inventoryItem;
+										ownerActor->inventoryList->items.GetNthItem(j, inventoryItem);
+										if (inventoryItem.form == modMiscItem) {
+											bAllowed = true;
+											break;
+										}
 									}
 								}
 							}
+							else {
+								bAllowed = true;
+							}
+							modAllowedList.Set(&bAllowed, i);
 						}
-						else {
-							bAllowed = true;
-						}
-						modAllowedList.Set(&bAllowed, i);
+						return true;
 					}
-					return true;
 				}
 			}
 		}
@@ -225,14 +248,17 @@ namespace ATGlobals
 	}
 
 	// returns a caliber's casing item
-	TESObjectMISC *GetCurrentCasing(StaticFunctionTag*, BGSKeyword *curCaliber, UInt32 iAmmoIndex)
+	TESObjectMISC * GetCurrentCasing(StaticFunctionTag*, TESObjectWEAP * curWeapon, BGSKeyword * curCaliber, UInt32 iAmmoIndex)
 	{
-		if (curCaliber) {
-			ATCaliber tempCaliber;
-			if (ATShared::ATData.GetCaliberByID(curCaliber->formID, tempCaliber)) {
-				if (iAmmoIndex < tempCaliber.ammoTypes.count) {
-					ATCaliber::AmmoType tempAmmoType = tempCaliber.ammoTypes[iAmmoIndex];
-					return tempAmmoType.casingItem;
+		if (curWeapon && curCaliber) {
+			ATWeapon tempWeap;
+			if (ATGameData::GetWeaponByID(curWeapon->formID, tempWeap)) {
+				ATCaliber tempCaliber;
+				if (tempWeap.GetCaliberDataByID(curCaliber->formID, tempCaliber)) {
+					if (iAmmoIndex < tempCaliber.ammoTypes.count) {
+						ATCaliber::AmmoType tempAmmoType = tempCaliber.ammoTypes[iAmmoIndex];
+						return tempAmmoType.casingItem;
+					}
 				}
 			}
 		}
@@ -240,17 +266,19 @@ namespace ATGlobals
 	}
 
 	// returns a caliber's ammo subtype forms
-	VMArray<TESAmmo*> GetCaliberAmmoTypes(StaticFunctionTag*, BGSKeyword *curCaliber)
+	VMArray<TESAmmo*> GetCaliberAmmoTypes(StaticFunctionTag*, TESObjectWEAP * curWeapon, BGSKeyword * curCaliber)
 	{
 		VMArray<TESAmmo*> result;
-		if (curCaliber) {
-			ATCaliber tempCaliber;
-			if (ATShared::ATData.GetCaliberByID(curCaliber->formID, tempCaliber)) {
-				if (tempCaliber.ammoTypes.count > 0) {
-					TESAmmo *tempAmmo = nullptr;
-					for (UInt8 i = 0; i < tempCaliber.ammoTypes.count; i++) {
-						tempAmmo = (TESAmmo*)tempCaliber.ammoTypes[i].modItem;
-						result.Push(&tempAmmo);
+		if (curCaliber && curWeapon) {
+			ATWeapon tempWeap;
+			if (ATGameData::GetWeaponByID(curWeapon->formID, tempWeap)) {
+				ATCaliber tempCaliber;
+				if (tempWeap.GetCaliberDataByID(curCaliber->formID, tempCaliber)) {
+					if (tempCaliber.ammoTypes.count > 0) {
+						TESAmmo * tempAmmo = nullptr;
+						for (UInt8 i = 0; i < tempCaliber.ammoTypes.count; i++) {
+							result.Push(&tempCaliber.ammoTypes[i].ammoItem);
+						}
 					}
 				}
 			}
@@ -259,14 +287,17 @@ namespace ATGlobals
 	}
 
 	// returns the ammo type mod at the given index for a caliber
-	BGSMod::Attachment::Mod *GetAmmoModAtIndex(StaticFunctionTag*, BGSKeyword *curCaliber, UInt32 iAmmoIndex)
+	BGSMod::Attachment::Mod * GetAmmoModAtIndex(StaticFunctionTag*, TESObjectWEAP * curWeapon, BGSKeyword * curCaliber, UInt32 iAmmoIndex)
 	{
-		if (curCaliber) {
-			ATCaliber tempCaliber;
-			if (ATShared::ATData.GetCaliberByID(curCaliber->formID, tempCaliber)) {
-				if (iAmmoIndex < tempCaliber.ammoTypes.count) {
-					ATCaliber::AmmoType tempAmmoType = tempCaliber.ammoTypes[iAmmoIndex];
-					return tempAmmoType.swapMod;
+		if (curWeapon && curCaliber) {
+			ATWeapon tempWeap;
+			if (ATGameData::GetWeaponByID(curWeapon->formID, tempWeap)) {
+				ATCaliber tempCaliber;
+				if (tempWeap.GetCaliberDataByID(curCaliber->formID, tempCaliber)) {
+					if (iAmmoIndex < tempCaliber.ammoTypes.count) {
+						ATCaliber::AmmoType tempAmmoType = tempCaliber.ammoTypes[iAmmoIndex];
+						return tempAmmoType.ammoMod;
+					}
 				}
 			}
 		}
@@ -277,12 +308,12 @@ namespace ATGlobals
 	// -------- Swappable Mods
 
 	// returns the number of active mod slots for this weapon type
-	UInt32 GetNumSwapModSlots(StaticFunctionTag*, TESObjectWEAP *curWeapon)
+	UInt32 GetNumSwapModSlots(StaticFunctionTag*, TESObjectWEAP * curWeapon)
 	{
 		if (curWeapon) {
 			UInt32 weapID = curWeapon->formID;
 			ATWeapon tempWeap;
-			if (ATShared::ATData.GetWeaponByID(weapID, tempWeap)) {
+			if (ATGameData::GetWeaponByID(weapID, tempWeap)) {
 				return tempWeap.modSlots.count;
 			}
 		}
@@ -290,14 +321,14 @@ namespace ATGlobals
 	}
 
 	// returns the name of the mod slot at the given index for a weapon
-	BSFixedString GetModSlotName(StaticFunctionTag*, TESObjectWEAP *curWeapon, UInt32 iModSlot)
+	BSFixedString GetModSlotName(StaticFunctionTag*, TESObjectWEAP * curWeapon, UInt32 iModSlot)
 	{
 		if (curWeapon && ((int)iModSlot > -1)) {
 			UInt32 weapID = curWeapon->formID;
 			ATWeapon tempWeap;
-			if (ATShared::ATData.GetWeaponByID(weapID, tempWeap)) {
+			if (ATGameData::GetWeaponByID(weapID, tempWeap)) {
 				if (iModSlot < tempWeap.modSlots.count) {
-					ATWeapon::ModSlot tempSlot;
+					ATWeapon::ATModSlot tempSlot;
 					if (tempWeap.modSlots.GetNthItem(iModSlot, tempSlot)) {
 						return tempSlot.slotName;
 					}
@@ -308,14 +339,14 @@ namespace ATGlobals
 	}
 
 	// returns the number ObjectMods in a modSlot
-	UInt32 GetNumModsForSlot(StaticFunctionTag*, TESObjectWEAP *curWeapon, UInt32 iModSlot)
+	UInt32 GetNumModsForSlot(StaticFunctionTag*, TESObjectWEAP * curWeapon, UInt32 iModSlot)
 	{
 		if (curWeapon && ((int)iModSlot > -1)) {
 			UInt32 weapID = curWeapon->formID;
 			ATWeapon tempWeap;
-			if (ATShared::ATData.GetWeaponByID(weapID, tempWeap)) {
+			if (ATGameData::GetWeaponByID(weapID, tempWeap)) {
 				if (tempWeap.modSlots.count > iModSlot) {
-					ATWeapon::ModSlot tempSlot = tempWeap.modSlots[iModSlot];
+					ATWeapon::ATModSlot tempSlot = tempWeap.modSlots[iModSlot];
 					return tempSlot.swappableMods.count;
 				}
 			}
@@ -324,22 +355,22 @@ namespace ATGlobals
 	}
 
 	// returns the index of the equipped mod for a slot
-	UInt32 GetEquippedModIndex(StaticFunctionTag*, Actor *tempActor, UInt32 iEquipSlot = 41, UInt32 iModSlot = 0)
+	UInt32 GetEquippedModIndex(StaticFunctionTag*, Actor * tempActor, UInt32 iEquipSlot = 41, UInt32 iModSlot = 0)
 	{
 		if (tempActor && ((int)iModSlot > -1)) {
-			UInt32 weapID = ATShared::GetEquippedItemFormID(tempActor, iEquipSlot);
-			TESObjectWEAP::InstanceData *instanceData = ATShared::GetEquippedInstanceData(tempActor, iEquipSlot);
+			UInt32 weapID = ATUtilities::GetEquippedItemFormID(tempActor, iEquipSlot);
+			TESObjectWEAP::InstanceData *instanceData = ATUtilities::GetEquippedInstanceData(tempActor, iEquipSlot);
 			if ((weapID > 0) && instanceData) {
 				ActorEquipData * equipData = tempActor->equipData;
 				if (equipData) {
 					auto data = equipData->slots[iEquipSlot].extraData->data;
 					if (data) {
 						ATWeapon tempWeap;
-						if (ATShared::ATData.GetWeaponByID(weapID, tempWeap)) {
+						if (ATGameData::GetWeaponByID(weapID, tempWeap)) {
 							if (iModSlot < tempWeap.modSlots.count) {
-								ATWeapon::ModSlot tempSlot = tempWeap.modSlots[iModSlot];
+								ATWeapon::ATModSlot tempSlot = tempWeap.modSlots[iModSlot];
 								for (UInt32 j = 0; j < tempSlot.swappableMods.count; j++) {
-									ATSwappableMod tempMod = tempSlot.swappableMods[j];
+									ATWeapon::ATSwappableMod tempMod = tempSlot.swappableMods[j];
 									if (tempMod.swapMod) {
 										for (UInt32 i = 0; i < data->blockSize / sizeof(BGSObjectInstanceExtra::Data::Form); i++) {
 											BGSMod::Attachment::Mod * objectMod = (BGSMod::Attachment::Mod *)Runtime_DynamicCast(LookupFormByID(data->forms[i].formId), RTTI_TESForm, RTTI_BGSMod__Attachment__Mod);
@@ -359,19 +390,19 @@ namespace ATGlobals
 	}
 
 	// updates input arrays with data needed by the attachment selection menu
-	bool GetHUDDataForModSlot(StaticFunctionTag*, Actor *ownerActor, UInt32 iEquipSlot, UInt32 iModSlot, VMArray<BSFixedString> modNames, VMArray<BSFixedString> modDescriptions, VMArray<UInt32> modItemCounts, VMArray<bool> modAllowedList)
+	bool GetHUDDataForModSlot(StaticFunctionTag*, Actor * ownerActor, UInt32 iEquipSlot, UInt32 iModSlot, VMArray<BSFixedString> modNames, VMArray<BSFixedString> modDescriptions, VMArray<UInt32> modItemCounts, VMArray<bool> modAllowedList)
 	{
 		if (ownerActor) {
-			TESObjectWEAP *curWeapon = ATShared::GetEquippedWeapon(ownerActor, iEquipSlot);
+			TESObjectWEAP *curWeapon = ATUtilities::GetEquippedWeapon(ownerActor, iEquipSlot);
 			if (curWeapon && ((int)iModSlot > -1)) {
 				UInt32 weapID = curWeapon->formID;
 				ATWeapon tempWeap;
-				if (ATShared::ATData.GetWeaponByID(weapID, tempWeap)) {
+				if (ATGameData::GetWeaponByID(weapID, tempWeap)) {
 					if (tempWeap.modSlots.count > iModSlot) {
-						ATWeapon::ModSlot tempSlot = tempWeap.modSlots[iModSlot];
+						ATWeapon::ATModSlot tempSlot = tempWeap.modSlots[iModSlot];
 						if (tempSlot.swappableMods.count > 0) {
 							for (UInt32 i = 0; i < tempSlot.swappableMods.count; i++) {
-								ATSwappableMod tempMod = tempSlot.swappableMods[i];
+								ATWeapon::ATSwappableMod tempMod = tempSlot.swappableMods[i];
 
 								// attachment name
 								BSFixedString modName = tempMod.swapMod->fullName.name;
@@ -439,16 +470,16 @@ namespace ATGlobals
 	}
 
 	// returns the mod at the given slot:index for a weapon
-	BGSMod::Attachment::Mod *GetModAtIndex(StaticFunctionTag*, TESObjectWEAP *curWeapon, UInt32 iModSlot, UInt32 iModIndex)
+	BGSMod::Attachment::Mod * GetModAtIndex(StaticFunctionTag*, TESObjectWEAP * curWeapon, UInt32 iModSlot, UInt32 iModIndex)
 	{
 		if (curWeapon && ((int)iModSlot > -1) && ((int)iModIndex > -1)) {
 			UInt32 weapID = curWeapon->formID;
 			ATWeapon tempWeap;
-			if (ATShared::ATData.GetWeaponByID(weapID, tempWeap)) {
+			if (ATGameData::GetWeaponByID(weapID, tempWeap)) {
 				if (iModSlot < tempWeap.modSlots.count) {
-					ATWeapon::ModSlot tempSlot = tempWeap.modSlots[iModSlot];
+					ATWeapon::ATModSlot tempSlot = tempWeap.modSlots[iModSlot];
 					if (iModIndex < tempSlot.swappableMods.count) {
-						ATSwappableMod tempMod = tempSlot.swappableMods[iModIndex];
+						ATWeapon::ATSwappableMod tempMod = tempSlot.swappableMods[iModIndex];
 						return tempMod.swapMod;
 					}
 				}
@@ -458,18 +489,18 @@ namespace ATGlobals
 	}
 
 	// returns a mod's required item forms
-	VMArray<TESForm*> GetModSlotRequiredItems(StaticFunctionTag*, TESObjectWEAP *curWeapon, UInt32 iModSlot)
+	VMArray<TESForm*> GetModSlotRequiredItems(StaticFunctionTag*, TESObjectWEAP * curWeapon, UInt32 iModSlot)
 	{
 		VMArray<TESForm*> result;
 		if (curWeapon && ((int)iModSlot > -1)) {
 			UInt32 weapID = curWeapon->formID;
 			ATWeapon tempWeap;
-			if (ATShared::ATData.GetWeaponByID(weapID, tempWeap)) {
+			if (ATGameData::GetWeaponByID(weapID, tempWeap)) {
 				if (iModSlot < tempWeap.modSlots.count) {
-					ATWeapon::ModSlot tempSlot = tempWeap.modSlots[iModSlot];
+					ATWeapon::ATModSlot tempSlot = tempWeap.modSlots[iModSlot];
 					if (tempSlot.swappableMods.count > 0) {
 						for (UInt8 i = 0; i < tempSlot.swappableMods.count; i++) {
-							ATSwappableMod tempSwapMod = tempSlot.swappableMods[i];
+							ATWeapon::ATSwappableMod tempSwapMod = tempSlot.swappableMods[i];
 							result.Push(&tempSwapMod.modItem);
 						}
 					}
@@ -483,10 +514,10 @@ namespace ATGlobals
 	// ******************* Ammo
 
 	// returns the equipped ammo form - used for ammo swapping checks and jamming
-	TESAmmo* GetEquippedAmmo(StaticFunctionTag*, Actor *tempActor, UInt32 iSlot = 41)
+	TESAmmo * GetEquippedAmmo(StaticFunctionTag*, Actor * tempActor, UInt32 iSlot = 41)
 	{
 		if (tempActor) {
-			TESObjectWEAP::InstanceData *instanceData = ATShared::GetEquippedInstanceData(tempActor, iSlot);
+			TESObjectWEAP::InstanceData * instanceData = ATUtilities::GetEquippedInstanceData(tempActor, iSlot);
 			if (instanceData) {
 				return instanceData->ammo;
 			}
@@ -498,7 +529,7 @@ namespace ATGlobals
 	bool SetEquippedAmmo(StaticFunctionTag*, TESAmmo *newAmmo, Actor *tempActor, UInt32 iSlot = 41)
 	{
 		if (tempActor) {
-			TESObjectWEAP::InstanceData *instanceData = ATShared::GetEquippedInstanceData(tempActor, iSlot);
+			TESObjectWEAP::InstanceData *instanceData = ATUtilities::GetEquippedInstanceData(tempActor, iSlot);
 			if (instanceData) {
 				if (instanceData->ammo != newAmmo) {
 					instanceData->ammo = newAmmo;
@@ -511,10 +542,10 @@ namespace ATGlobals
 
 	// ******************* Projectiles
 
-	BGSProjectile* GetEquippedProjectile(StaticFunctionTag*, Actor *tempActor, UInt32 iSlot = 41)
+	BGSProjectile * GetEquippedProjectile(StaticFunctionTag*, Actor * tempActor, UInt32 iSlot = 41)
 	{
 		if (tempActor) {
-			TESObjectWEAP::InstanceData *instanceData = ATShared::GetEquippedInstanceData(tempActor, iSlot);
+			TESObjectWEAP::InstanceData * instanceData = ATUtilities::GetEquippedInstanceData(tempActor, iSlot);
 			if (instanceData) {
 				if (instanceData->firingData) {
 					return instanceData->firingData->projectileOverride;
@@ -525,10 +556,10 @@ namespace ATGlobals
 	}
 
 	// used to set the 'misfire' projectile preceding a jam (and random misfires)
-	bool SetEquippedProjectile(StaticFunctionTag*, BGSProjectile *newProjectile, Actor *tempActor, UInt32 iSlot = 41)
+	bool SetEquippedProjectile(StaticFunctionTag*, BGSProjectile * newProjectile, Actor * tempActor, UInt32 iSlot = 41)
 	{
 		if (tempActor) {
-			TESObjectWEAP::InstanceData *instanceData = ATShared::GetEquippedInstanceData(tempActor, iSlot);
+			TESObjectWEAP::InstanceData * instanceData = ATUtilities::GetEquippedInstanceData(tempActor, iSlot);
 			if (instanceData) {
 				if (instanceData->firingData) {
 					if (instanceData->firingData->projectileOverride != newProjectile) {
@@ -542,40 +573,19 @@ namespace ATGlobals
 	}
 
 
-	
+
 
 
 	// ********************** Critical Effects/Failures
 
 	// performs a critical roll and returns the resulting spell
-	SpellItem *GetCritEffect(StaticFunctionTag*, BGSKeyword *critTableKW, UInt32 iRollMod = 0)
+	SpellItem * GetCritEffect(StaticFunctionTag*, BGSKeyword * critTableKW, Actor * targetActor, UInt32 iRollMod = 0)
 	{
 		if (critTableKW) {
-			UInt32 tempKW = critTableKW->formID;
-			if (tempKW > 0) {
-				int tempCritTable = ATShared::ATData.GetCritTableIndex(tempKW);
-				if (tempCritTable > -1) {
-					return ATShared::ATData.CritEffectTables[tempCritTable].GetCritSpell(iRollMod);
-				}
-			}
-		}
-		return ATShared::ATData.CritEffectTables[0].GetCritSpell(iRollMod);
-	}
-
-
-	// performs a critical failure roll and returns the resulting spell
-	SpellItem *GetCritFailure(StaticFunctionTag*, TESObjectWEAP *curWeapon, UInt32 iRollMod = 0, UInt32 iLuck = 0)
-	{
-		if (curWeapon) {
-			UInt32 weapID = curWeapon->formID;
-			ATWeapon tempWeap;
-			if (ATShared::ATData.GetWeaponByID(weapID, tempWeap)) {
-				if (tempWeap.critFailureType) {
-					int critFailIndex = ATShared::ATData.GetCritFailTableIndex(tempWeap.critFailureType->formID);
-					if (critFailIndex > -1) {
-						ATCritEffectTable tempTable = ATShared::ATData.CritFailureTables[critFailIndex];
-						return tempTable.GetCritFailureSpell(iRollMod, iLuck);
-					}
+			int tempCritTable = ATGameData::GetCritTableIndex(critTableKW->formID);
+			if (tempCritTable > -1) {
+				if (targetActor->race) {
+					return ATGameData::ATCritEffectTables[tempCritTable].GetCritSpell(iRollMod, targetActor->race->formID);
 				}
 			}
 		}
@@ -583,25 +593,70 @@ namespace ATGlobals
 	}
 
 
+	// performs a critical failure roll and returns the resulting spell
+	SpellItem * GetCritFailure(StaticFunctionTag*, TESObjectWEAP * curWeapon, UInt32 iRollMod = 0, UInt32 iLuck = 0, float fCritFailChance = 1.0)
+	{
+		if (fCritFailChance > 0.0) {
+			if (curWeapon) {
+				int iRoll = ATUtilities::ATrng.RandomInt();
+				_MESSAGE("crit fail chance roll: %i", iRoll);
+				if (iRoll < (int)round(fCritFailChance)) {
+					UInt32 weapID = curWeapon->formID;
+					ATWeapon tempWeap;
+					if (ATGameData::GetWeaponByID(weapID, tempWeap)) {
+						int iRollTable = ATUtilities::ATrng.RandomInt(0, (85 + iRollMod)) - (7 * (iLuck - 7));
+						_MESSAGE("crit fail table roll: %i", iRollTable);
+						for (UInt32 i = 0; i < tempWeap.critFailures.count; i++) {
+							if (iRollTable < tempWeap.critFailures[i].rollMax) {
+								if (tempWeap.critFailures[i].critSpell) {
+									_MESSAGE("Critical Failure: %s", tempWeap.critFailures[i].critSpell->name.name.c_str());
+								}
+								return tempWeap.critFailures[i].critSpell;
+							}
+						}
+					}
+				}
+			}
+		}
+		return nullptr;
+	}
+
+	BGSMod::Attachment::Mod *GetRandomDamagedMod(StaticFunctionTag*, Actor * ownerActor, UInt32 iEquipSlot, UInt32 iModSlot)
+	{
+		if (ownerActor) {
+			UInt32 weapID = ATUtilities::GetEquippedItemFormID(ownerActor, iEquipSlot);
+			if (weapID > 0) {
+				ATWeapon tempWeap;
+				if (ATGameData::GetWeaponByID(weapID, tempWeap)) {
+					return tempWeap.GetDamagedMod(ownerActor, iEquipSlot, (int)iModSlot);
+				}
+			}
+		}
+		return nullptr;
+	}
+
+
+
 	// ********************** Magazines
 
 	// returns the droppable misc object for the equipped magazine mod
-	TESObjectMISC *GetEquippedMagItem(StaticFunctionTag*, Actor *thisActor, UInt32 iSlot = 41)
+	TESObjectMISC * GetEquippedMagItem(StaticFunctionTag*, Actor * thisActor, UInt32 iSlot = 41)
 	{
 		if (thisActor) {
-			UInt32 weapID = ATShared::GetEquippedItemFormID(thisActor, iSlot);
+			UInt32 weapID = ATUtilities::GetEquippedItemFormID(thisActor, iSlot);
 			ATWeapon tempWeap;
-			if (ATShared::ATData.GetWeaponByID(weapID, tempWeap)) {
-				TESObjectWEAP::InstanceData *instanceData = ATShared::GetEquippedInstanceData(thisActor, iSlot);
-
+			if (ATGameData::GetWeaponByID(weapID, tempWeap)) {
+				TESObjectWEAP::InstanceData * instanceData = ATUtilities::GetEquippedInstanceData(thisActor, iSlot);
 				if (instanceData) {
 					if (instanceData->keywords) {
 						for (UInt8 j = 0; j < tempWeap.magazines.count; j++) {
-							ATWeapon::DroppableMag tempMag = tempWeap.magazines[j];
-							if (tempMag.magKW) {
+							ATWeapon::ATMagItem tempMag = tempWeap.magazines[j];
+							if (tempMag.magKW > 0) {
 								for (UInt8 i = 0; i < instanceData->keywords->numKeywords; i++) {
-									if (instanceData->keywords->keywords[i] == tempMag.magKW) {
-										return tempMag.magItem;
+									if (instanceData->keywords->keywords[i]) {
+										if (instanceData->keywords->keywords[i]->formID == tempMag.magKW) {
+											return tempMag.magItem;
+										}
 									}
 								}
 							}
@@ -620,37 +675,33 @@ namespace ATGlobals
 
 	// ********************** Holsters/Sheathed Weapons
 
-	TESObjectARMO *GetHolsterArmor(StaticFunctionTag*, Actor *thisActor, UInt32 iSlot = 41, bool weapDrawn = true)
+	TESObjectARMO * GetHolsterArmor(StaticFunctionTag*, Actor * thisActor, UInt32 iSlot = 41)
 	{
 		if (thisActor) {
-			UInt32 weapID = ATShared::GetEquippedItemFormID(thisActor, iSlot);
+			UInt32 weapID = ATUtilities::GetEquippedItemFormID(thisActor, iSlot);
 			ATWeapon tempWeap;
-			if (ATShared::ATData.GetWeaponByID(weapID, tempWeap)) {
-				TESObjectWEAP::InstanceData *instanceData = ATShared::GetEquippedInstanceData(thisActor, iSlot);
+			if (ATGameData::GetWeaponByID(weapID, tempWeap)) {
+				TESObjectWEAP::InstanceData *instanceData = ATUtilities::GetEquippedInstanceData(thisActor, iSlot);
 
 				if (instanceData) {
 					if (instanceData->keywords) {
 						for (UInt8 j = 0; j < tempWeap.holsters.count; j++) {
-							ATWeapon::HolsterArmor tempHolster = tempWeap.holsters[j];
-							if (tempHolster.requiredKW) {
+							ATWeapon::ATHolsterArmor tempHolster = tempWeap.holsters[j];
+							if (tempHolster.requiredKW > 0) {
 								for (UInt8 i = 0; i < instanceData->keywords->numKeywords; i++) {
-									if (instanceData->keywords->keywords[i] == tempHolster.requiredKW) {
-										if (weapDrawn)
-											return tempHolster.armorHolster;
-										else
+									if (instanceData->keywords->keywords[i]) {
+										if (instanceData->keywords->keywords[i]->formID == tempHolster.requiredKW) {
 											return tempHolster.armorWeapon;
+										}
 									}
 								}
 							}
 							else {
-								if (weapDrawn)
-									return tempHolster.armorHolster;
-								else
-									return tempHolster.armorWeapon;
+								return tempHolster.armorWeapon;
 							}
 						}
 					}
-					
+
 				}
 			}
 		}
@@ -661,35 +712,51 @@ namespace ATGlobals
 	// ************************** Weapon instance updates:
 
 	// updates the equipped weapon's projectile based on caliber, ammo type and found attachment keywords
-	bool UpdateEquippedProjectile(StaticFunctionTag*, BGSKeyword *curCaliber, Actor *tempActor, UInt32 iSlot = 41)
+	bool UpdateEquippedProjectile(StaticFunctionTag*, BGSKeyword * curCaliber, Actor * ownerActor, UInt32 iEquipSlot = 41)
 	{
-		if (tempActor) {
-			TESObjectWEAP::InstanceData *instanceData = ATShared::GetEquippedInstanceData(tempActor, iSlot);
+		if (ownerActor) {
+			TESObjectWEAP::InstanceData *instanceData = ATUtilities::GetEquippedInstanceData(ownerActor, iEquipSlot);
 			if (instanceData) {
 				if (instanceData->firingData) {
-					ATCaliber tempCaliber;
-					if (ATShared::ATData.GetCaliberByID(curCaliber->formID, tempCaliber)) {
-						bool bFoundAmmo = false;
-						ATCaliber::AmmoType tempAmmoType;
-						TESAmmo *tempAmmo = nullptr;
+					TESObjectWEAP *curWeapon = ATUtilities::GetEquippedWeapon(ownerActor, iEquipSlot);
+					if (curWeapon) {
+						ATWeapon tempWeap;
+						if (ATGameData::GetWeaponByID(curWeapon->formID, tempWeap)) {
+							ATCaliber tempCaliber;
+							if (tempWeap.GetCaliberDataByID(curCaliber->formID, tempCaliber)) {
+								bool bFoundAmmo = false;
+								ATCaliber::AmmoType tempAmmoType;
 
-						for (UInt8 i = 0; i < tempCaliber.ammoTypes.count; i++) {
-							if (tempCaliber.ammoTypes.GetNthItem(i, tempAmmoType)) {
-								tempAmmo = (TESAmmo*)tempAmmoType.modItem;
-								if (instanceData->ammo == tempAmmo) {
-									bFoundAmmo = true;
-									break;
+								for (UInt8 i = 0; i < tempCaliber.ammoTypes.count; i++) {
+									if (tempCaliber.ammoTypes.GetNthItem(i, tempAmmoType)) {
+										if (instanceData->ammo == tempAmmoType.ammoItem) {
+											bFoundAmmo = true;
+											break;
+										}
+									}
 								}
-							}
-						}
-						if (bFoundAmmo) {
-							for (UInt8 j = 0; j < tempAmmoType.projectiles.count; j++) {
-								ATCaliber::ProjectileOverride tempProjOvr;
-								tempAmmoType.projectiles.GetNthItem(j, tempProjOvr);
-								if (tempProjOvr.projectileKW) {
-									if (instanceData->keywords) {
-										for (UInt8 i = 0; i < instanceData->keywords->numKeywords; i++) {
-											if (instanceData->keywords->keywords[i] == tempProjOvr.projectileKW) {
+
+								if (bFoundAmmo) {
+									for (UInt8 j = 0; j < tempAmmoType.projectiles.count; j++) {
+										ATCaliber::ProjectileOverride tempProjOvr;
+										tempAmmoType.projectiles.GetNthItem(j, tempProjOvr);
+										if (tempProjOvr.projectileKW > 0) {
+											if (instanceData->keywords) {
+												for (UInt8 i = 0; i < instanceData->keywords->numKeywords; i++) {
+													if (instanceData->keywords->keywords[i]) {
+														if (instanceData->keywords->keywords[i]->formID == tempProjOvr.projectileKW) {
+															if (tempProjOvr.impactData) {
+																instanceData->unk58 = tempProjOvr.impactData;
+															}
+															if (instanceData->firingData->projectileOverride != tempProjOvr.projectile) {
+																instanceData->firingData->projectileOverride = tempProjOvr.projectile;
+																return true;
+															}
+														}
+													}
+												}
+											}
+											else {
 												if (tempProjOvr.impactData) {
 													instanceData->unk58 = tempProjOvr.impactData;
 												}
@@ -699,24 +766,15 @@ namespace ATGlobals
 												}
 											}
 										}
-									}
-									else {
-										if (tempProjOvr.impactData) {
-											instanceData->unk58 = tempProjOvr.impactData;
+										else {
+											if (tempProjOvr.impactData) {
+												instanceData->unk58 = tempProjOvr.impactData;
+											}
+											if (instanceData->firingData->projectileOverride != tempProjOvr.projectile) {
+												instanceData->firingData->projectileOverride = tempProjOvr.projectile;
+												return true;
+											}
 										}
-										if (instanceData->firingData->projectileOverride != tempProjOvr.projectile) {
-											instanceData->firingData->projectileOverride = tempProjOvr.projectile;
-											return true;
-										}
-									}
-								}
-								else {
-									if (tempProjOvr.impactData) {
-										instanceData->unk58 = tempProjOvr.impactData;
-									}
-									if (instanceData->firingData->projectileOverride != tempProjOvr.projectile) {
-										instanceData->firingData->projectileOverride = tempProjOvr.projectile;
-										return true;
 									}
 								}
 							}
@@ -728,17 +786,18 @@ namespace ATGlobals
 		return false;
 	}
 
+
 	/** updates recoil based on the passed multiplier
 		return values: -1=already edited + no update needed, 0=already edited + update needed, 1=edit successful
 	**/
-	UInt32 UpdateEquippedRecoil(StaticFunctionTag*, Actor *tempActor, UInt32 iSlot = 41, float fRecoilMult = 1.0)
+	UInt32 UpdateEquippedRecoil(StaticFunctionTag*, Actor * tempActor, UInt32 iSlot = 41, float fRecoilMult = 1.0)
 	{
 		if (tempActor) {
-			TESObjectWEAP::InstanceData *instanceData = ATShared::GetEquippedInstanceData(tempActor, iSlot);
+			TESObjectWEAP::InstanceData * instanceData = ATUtilities::GetEquippedInstanceData(tempActor, iSlot);
 			if (instanceData) {
-				ATAimModel *tempAimModel = (ATAimModel*)instanceData->aimModel;
-				if (tempAimModel) {
-					ActorValueInfo *skillModAV = (ActorValueInfo*)ATShared::GetFormFromIdentifier("AmmoTweaks.esm|001DF2");
+				ATAimModel * tempAimModel = (ATAimModel*)instanceData->aimModel;
+				if (instanceData->aimModel) {
+					ActorValueInfo * skillModAV = (ActorValueInfo*)ATUtilities::GetFormFromIdentifier("AmmoTweaks.esm|001DF2");
 					if (skillModAV) {
 						if (!instanceData->modifiers) {
 							instanceData->modifiers = new tArray<TBO_InstanceData::ValueModifier>();
@@ -760,22 +819,22 @@ namespace ATGlobals
 
 							if (checkVal != 100) {
 								// edit recoil
-								tempAimModel->Rec_HipMult *= fRecoilMult;
-								tempAimModel->Rec_MinPerShot *= fRecoilMult;
-								tempAimModel->Rec_MaxPerShot = max(tempAimModel->Rec_MinPerShot, tempAimModel->Rec_MaxPerShot * fRecoilMult);
+								ATAimModel * tempAimModel = (ATAimModel*)instanceData->aimModel;
+								if (tempAimModel) {
+									tempAimModel->Rec_HipMult *= fRecoilMult;
+									tempAimModel->Rec_MinPerShot *= fRecoilMult;
+									tempAimModel->Rec_MaxPerShot = max(tempAimModel->Rec_MinPerShot, tempAimModel->Rec_MaxPerShot * fRecoilMult);
 
-								// add the check AV
-								if (checkVal != 0) {
-									TBO_InstanceData::ValueModifier skillAVMod;
-
-									skillAVMod.avInfo = skillModAV;
-
-									skillAVMod.unk08 = checkVal;
-									instanceData->modifiers->Push(skillAVMod);
-
-									_MESSAGE("\nRecoil updated...\n    Min: %.4f, Max: %.4f, HipMult: %.4f", tempAimModel->Rec_MinPerShot, tempAimModel->Rec_MaxPerShot, tempAimModel->Rec_HipMult);
+									// add the check AV
+									if (checkVal != 0) {
+										TBO_InstanceData::ValueModifier skillAVMod;
+										skillAVMod.avInfo = skillModAV;
+										skillAVMod.unk08 = checkVal;
+										instanceData->modifiers->Push(skillAVMod);
+										_MESSAGE("\nRecoil updated...\n    Min: %.4f, Max: %.4f, HipMult: %.4f", tempAimModel->Rec_MinPerShot, tempAimModel->Rec_MaxPerShot, tempAimModel->Rec_HipMult);
+									}
+									return 1;
 								}
-								return 1;
 							}
 						}
 					}
@@ -785,20 +844,25 @@ namespace ATGlobals
 		return 0;
 	}
 
+
 	// -------- animations:
 
 	// returns the idle to play when starting an ammo swap
-	TESForm *GetAmmoSwapIdle_1P(StaticFunctionTag*, Actor *tempActor, UInt32 iSlot = 41)
+	TESForm * GetAmmoSwapIdle_1P(StaticFunctionTag*, Actor * tempActor, UInt32 iSlot = 41)
 	{
 		if (tempActor) {
-			UInt32 weapID = ATShared::GetEquippedItemFormID(tempActor, iSlot);
-			TESObjectWEAP::InstanceData *instanceData = ATShared::GetEquippedInstanceData(tempActor, iSlot);
-
+			UInt32 weapID = ATUtilities::GetEquippedItemFormID(tempActor, iSlot);
+			TESObjectWEAP::InstanceData *instanceData = ATUtilities::GetEquippedInstanceData(tempActor, iSlot);
 			if ((weapID > 0) && instanceData) {
-				int weapIndex = ATShared::ATData.GetWeaponIndex(weapID);
+				int weapIndex = ATGameData::GetWeaponIndex(weapID);
 				if (weapIndex > -1) {
-					ATWeapon tempWeap = ATShared::ATData.Weapons[weapIndex];
-					return tempWeap.ammoSwapIdle_1P;
+					ATWeapon tempWeap;
+					if (ATGameData::GetWeaponByID(weapID, tempWeap)) {
+						ATCaliber tempCaliber;
+						if (tempWeap.GetInstanceCaliber(instanceData, tempCaliber)) {
+							return tempCaliber.swapIdle_1P;
+						}
+					}
 				}
 			}
 		}
@@ -806,17 +870,21 @@ namespace ATGlobals
 	}
 
 	// returns the idle to play when starting an ammo swap
-	TESForm *GetAmmoSwapIdle_3P(StaticFunctionTag*, Actor *tempActor, UInt32 iSlot = 41)
+	TESForm * GetAmmoSwapIdle_3P(StaticFunctionTag*, Actor * tempActor, UInt32 iSlot = 41)
 	{
 		if (tempActor) {
-			UInt32 weapID = ATShared::GetEquippedItemFormID(tempActor, iSlot);
-			TESObjectWEAP::InstanceData *instanceData = ATShared::GetEquippedInstanceData(tempActor, iSlot);
-
+			UInt32 weapID = ATUtilities::GetEquippedItemFormID(tempActor, iSlot);
+			TESObjectWEAP::InstanceData *instanceData = ATUtilities::GetEquippedInstanceData(tempActor, iSlot);
 			if ((weapID > 0) && instanceData) {
-				int weapIndex = ATShared::ATData.GetWeaponIndex(weapID);
+				int weapIndex = ATGameData::GetWeaponIndex(weapID);
 				if (weapIndex > -1) {
-					ATWeapon tempWeap = ATShared::ATData.Weapons[weapIndex];
-					return tempWeap.ammoSwapIdle_3P;
+					ATWeapon tempWeap;
+					if (ATGameData::GetWeaponByID(weapID, tempWeap)) {
+						ATCaliber tempCaliber;
+						if (tempWeap.GetInstanceCaliber(instanceData, tempCaliber)) {
+							return tempCaliber.swapIdle_3P;
+						}
+					}
 				}
 			}
 		}
@@ -824,17 +892,22 @@ namespace ATGlobals
 	}
 
 	// returns the animation event to listen for before swapping ammo
-	BSFixedString GetAmmoSwapAnimEvent(StaticFunctionTag*, Actor *tempActor, UInt32 iSlot = 41)
+	BSFixedString GetAmmoSwapAnimEvent(StaticFunctionTag*, Actor * tempActor, UInt32 iSlot = 41)
 	{
 		if (tempActor) {
-			UInt32 weapID = ATShared::GetEquippedItemFormID(tempActor, iSlot);
-			TESObjectWEAP::InstanceData *instanceData = ATShared::GetEquippedInstanceData(tempActor, iSlot);
+			UInt32 weapID = ATUtilities::GetEquippedItemFormID(tempActor, iSlot);
+			TESObjectWEAP::InstanceData * instanceData = ATUtilities::GetEquippedInstanceData(tempActor, iSlot);
 
 			if ((weapID > 0) && instanceData) {
-				int weapIndex = ATShared::ATData.GetWeaponIndex(weapID);
+				int weapIndex = ATGameData::GetWeaponIndex(weapID);
 				if (weapIndex > -1) {
-					ATWeapon tempWeap = ATShared::ATData.Weapons[weapIndex];
-					return tempWeap.ammoSwapAnimEvent;
+					ATWeapon tempWeap;
+					if (ATGameData::GetWeaponByID(weapID, tempWeap)) {
+						ATCaliber tempCaliber;
+						if (tempWeap.GetInstanceCaliber(instanceData, tempCaliber)) {
+							return tempCaliber.swapAnimEventName;
+						}
+					}
 				}
 			}
 		}
@@ -846,57 +919,35 @@ namespace ATGlobals
 	// -------- debug/dev
 
 
-	bool LogEquippedWeaponUnknowns(StaticFunctionTag*, Actor *thisActor, UInt32 iSlot = 41)
+	bool LogEquippedWeaponUnknowns(StaticFunctionTag*, Actor * thisActor, UInt32 iSlot = 41)
 	{
 		if (thisActor) {
-			TESObjectWEAP::InstanceData *instanceData = ATShared::GetEquippedInstanceData(thisActor, iSlot);
+			TESObjectWEAP::InstanceData * instanceData = ATUtilities::GetEquippedInstanceData(thisActor, iSlot);
 
 			if (instanceData) {
 				_MESSAGE(
-					"ints:\n   18: %i\n   20: %i\n   50: %i\n  100: %i\n  114: %i\n  118: %i\n  11C: %i\n  134: %i", 
+					"ints:\n   18: %i\n   20: %i\n   50: %i\n  100: %i\n  114: %i\n  118: %i\n  11C: %i\n  134: %i",
 					instanceData->unk18, instanceData->unk20, instanceData->unk50, instanceData->unk100, instanceData->unk114,
 					instanceData->unk118, instanceData->unk11C, instanceData->unk134
 				);
-				
+
+				if (instanceData->ammo) {
+					_MESSAGE("\n   Ammo unk160: %016X", instanceData->ammo->unk160);
+				}
+
 				//_MESSAGE("  137: %i (Weapon Anim Type)", instanceData->unk137);
 			}
 		}
 		return false;
 	}
 
-	bool AddObjectModMiscItem(StaticFunctionTag*, BGSMod::Attachment::Mod *thisMod, TESObjectMISC *miscItem)
-	{
-		if (thisMod && miscItem) {
-			ObjectModMiscPair *pair = g_modAttachmentMap->Find(&thisMod);
-			if (pair) {
-				pair->miscObject = miscItem;
-				return true;
-			}
-			else {
-				pair = new ObjectModMiscPair();
-				if (pair) {
-					pair->key = thisMod;
-					pair->miscObject = miscItem;
-					return g_modAttachmentMap->Add(pair);
-				}
-			}
-		}
-		return false;
-	}
-
-	bool AddSpellToRace(StaticFunctionTag*, SpellItem *newSpell, TESRace *thisRace)
-	{
-
-		return false;
-	}
-
 
 }
 
-
-void ATGlobals::RegisterPapyrus(VirtualMachine* vm)
+bool ATGlobals::RegisterPapyrus(VirtualMachine* vm)
 {
 	ATGlobals::RegisterFuncs(vm);
+	return true;
 }
 
 
@@ -922,15 +973,15 @@ void ATGlobals::RegisterFuncs(VirtualMachine* vm)
 	vm->RegisterFunction(
 		new NativeFunction3 <StaticFunctionTag, BSFixedString, BGSKeyword*, Actor*, UInt32>("GetEquippedAmmoName", SCRIPTNAME, GetEquippedAmmoName, vm));
 	vm->RegisterFunction(
-		new NativeFunction1 <StaticFunctionTag, UInt32, BGSKeyword*>("GetNumAmmoTypesForCaliber", SCRIPTNAME, GetNumAmmoTypesForCaliber, vm));
+		new NativeFunction2 <StaticFunctionTag, UInt32, TESObjectWEAP*, BGSKeyword*>("GetNumAmmoTypesForCaliber", SCRIPTNAME, GetNumAmmoTypesForCaliber, vm));
 	vm->RegisterFunction(
-		new NativeFunction6 <StaticFunctionTag, bool, Actor*, BGSKeyword*, VMArray<BSFixedString>, VMArray<BSFixedString>, VMArray<UInt32>, VMArray<bool>>("GetHUDDataForCaliber", SCRIPTNAME, GetHUDDataForCaliber, vm));
+		new NativeFunction7 <StaticFunctionTag, bool, Actor*, TESObjectWEAP*, BGSKeyword*, VMArray<BSFixedString>, VMArray<BSFixedString>, VMArray<UInt32>, VMArray<bool>>("GetHUDDataForCaliber", SCRIPTNAME, GetHUDDataForCaliber, vm));
 	vm->RegisterFunction(
-		new NativeFunction2 <StaticFunctionTag, TESObjectMISC*, BGSKeyword*, UInt32>("GetCurrentCasing", SCRIPTNAME, GetCurrentCasing, vm));
+		new NativeFunction3 <StaticFunctionTag, TESObjectMISC*, TESObjectWEAP*, BGSKeyword*, UInt32>("GetCurrentCasing", SCRIPTNAME, GetCurrentCasing, vm));
 	vm->RegisterFunction(
-		new NativeFunction1 <StaticFunctionTag, VMArray<TESAmmo*>, BGSKeyword*>("GetCaliberAmmoTypes", SCRIPTNAME, GetCaliberAmmoTypes, vm));
+		new NativeFunction2 <StaticFunctionTag, VMArray<TESAmmo*>, TESObjectWEAP*, BGSKeyword*>("GetCaliberAmmoTypes", SCRIPTNAME, GetCaliberAmmoTypes, vm));
 	vm->RegisterFunction(
-		new NativeFunction2 <StaticFunctionTag, BGSMod::Attachment::Mod*, BGSKeyword*, UInt32>("GetAmmoModAtIndex", SCRIPTNAME, GetAmmoModAtIndex, vm));
+		new NativeFunction3 <StaticFunctionTag, BGSMod::Attachment::Mod*, TESObjectWEAP*, BGSKeyword*, UInt32>("GetAmmoModAtIndex", SCRIPTNAME, GetAmmoModAtIndex, vm));
 
 	// ---- Swappable Mods
 	vm->RegisterFunction(
@@ -962,17 +1013,20 @@ void ATGlobals::RegisterFuncs(VirtualMachine* vm)
 
 	// ---- Crit Effect Tables
 	vm->RegisterFunction(
-		new NativeFunction2 <StaticFunctionTag, SpellItem*, BGSKeyword*, UInt32>("GetCritEffect", SCRIPTNAME, ATGlobals::GetCritEffect, vm));
+		new NativeFunction3 <StaticFunctionTag, SpellItem*, BGSKeyword*, Actor*, UInt32>("GetCritEffect", SCRIPTNAME, ATGlobals::GetCritEffect, vm));
 	vm->RegisterFunction(
-		new NativeFunction3 <StaticFunctionTag, SpellItem*, TESObjectWEAP*, UInt32, UInt32>("GetCritFailure", SCRIPTNAME, ATGlobals::GetCritFailure, vm));
+		new NativeFunction4 <StaticFunctionTag, SpellItem*, TESObjectWEAP*, UInt32, UInt32, float>("GetCritFailure", SCRIPTNAME, ATGlobals::GetCritFailure, vm));
 	
+	vm->RegisterFunction(
+		new NativeFunction3 <StaticFunctionTag, BGSMod::Attachment::Mod*, Actor*, UInt32, UInt32>("GetRandomDamagedMod", SCRIPTNAME, ATGlobals::GetRandomDamagedMod, vm));
+
 	// ---- Magazine Items
 	vm->RegisterFunction(
 		new NativeFunction2 <StaticFunctionTag, TESObjectMISC*, Actor*, UInt32>("GetEquippedMagItem", SCRIPTNAME, ATGlobals::GetEquippedMagItem, vm));
 
 	// ---- Holster/Sheathed Weapon Armors
 	vm->RegisterFunction(
-		new NativeFunction3 <StaticFunctionTag, TESObjectARMO*, Actor*, UInt32, bool>("GetHolsterArmor", SCRIPTNAME, ATGlobals::GetHolsterArmor, vm));
+		new NativeFunction2 <StaticFunctionTag, TESObjectARMO*, Actor*, UInt32>("GetHolsterArmor", SCRIPTNAME, ATGlobals::GetHolsterArmor, vm));
 
 
 	// ---- Weapon Updates
@@ -995,6 +1049,6 @@ void ATGlobals::RegisterFuncs(VirtualMachine* vm)
 		new NativeFunction2 <StaticFunctionTag, bool, Actor*, UInt32>("LogEquippedWeaponUnknowns", SCRIPTNAME, ATGlobals::LogEquippedWeaponUnknowns, vm));
 
 
-	_MESSAGE("    %s", SCRIPTNAME);
+	_MESSAGE("Registered native functions for %s", SCRIPTNAME);
 }
 

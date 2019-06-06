@@ -1,6 +1,6 @@
 #include "ATPapyrusWeaponRef.h"
 
-#define SCRIPTNAME "AT:Base:WeaponReference"
+#define SCRIPTNAME "AT:WeaponRefBase"
 
 
 
@@ -10,7 +10,7 @@ namespace ATWeaponRef
 	TESAmmo* GetRefAmmo(VMRefOrInventoryObj *thisObj)
 	{
 		if (thisObj) {
-			TESObjectWEAP::InstanceData *instanceData = ATShared::GetWeapRefInstanceData(thisObj);
+			TESObjectWEAP::InstanceData *instanceData = ATUtilities::GetWeapRefInstanceData(thisObj);
 			if (instanceData) {
 				return instanceData->ammo;
 				
@@ -23,7 +23,7 @@ namespace ATWeaponRef
 	float GetRefMaxRange(VMRefOrInventoryObj *thisObj)
 	{
 		if (thisObj) {
-			TESObjectWEAP::InstanceData *instanceData = ATShared::GetWeapRefInstanceData(thisObj);
+			TESObjectWEAP::InstanceData *instanceData = ATUtilities::GetWeapRefInstanceData(thisObj);
 			if (instanceData) {
 				return instanceData->maxRange;
 			}
@@ -35,7 +35,7 @@ namespace ATWeaponRef
 	UInt32 GetRefAttackDamage(VMRefOrInventoryObj *thisObj)
 	{
 		if (thisObj) {
-			TESObjectWEAP::InstanceData *instanceData = ATShared::GetWeapRefInstanceData(thisObj);
+			TESObjectWEAP::InstanceData *instanceData = ATUtilities::GetWeapRefInstanceData(thisObj);
 			if (instanceData) {
 				if (instanceData->baseDamage >= 0)
 					return (UInt32)instanceData->baseDamage;
@@ -51,7 +51,7 @@ namespace ATWeaponRef
 	float GetRefWeight(VMRefOrInventoryObj *thisObj)
 	{
 		if (thisObj) {
-			TESObjectWEAP::InstanceData *instanceData = ATShared::GetWeapRefInstanceData(thisObj);
+			TESObjectWEAP::InstanceData *instanceData = ATUtilities::GetWeapRefInstanceData(thisObj);
 			if (instanceData) {
 				return instanceData->weight;
 			}
@@ -63,7 +63,7 @@ namespace ATWeaponRef
 	ActorValueInfo* GetRefReqSkill(VMRefOrInventoryObj *thisObj)
 	{
 		if (thisObj) {
-			TESObjectWEAP::InstanceData *instanceData = ATShared::GetWeapRefInstanceData(thisObj);
+			TESObjectWEAP::InstanceData *instanceData = ATUtilities::GetWeapRefInstanceData(thisObj);
 			if (instanceData) {
 				return instanceData->skill;
 			}
@@ -74,9 +74,10 @@ namespace ATWeaponRef
 }
 
 
-void ATWeaponRef::RegisterPapyrus(VirtualMachine* vm)
+bool ATWeaponRef::RegisterPapyrus(VirtualMachine* vm)
 {
 	ATWeaponRef::RegisterFuncs(vm);
+	return true;
 }
 
 
@@ -93,5 +94,5 @@ void ATWeaponRef::RegisterFuncs(VirtualMachine* vm)
 	vm->RegisterFunction(
 		new NativeFunction0 <VMRefOrInventoryObj, ActorValueInfo*>("GetRefReqSkill", SCRIPTNAME, ATWeaponRef::GetRefReqSkill, vm));
 	
-	_MESSAGE("    %s", SCRIPTNAME);
+	_MESSAGE("Registered native functions for %s", SCRIPTNAME);
 }
