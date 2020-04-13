@@ -25,13 +25,11 @@
     <ClCompile Include="ConfigReader.cpp" />
     <ClCompile Include="GlobalSettings.cpp" />
     <ClCompile Include="ATShared.cpp" />
-    <ClCompile Include="HookUtil.cpp" />
     <ClCompile Include="PapyrusATGlobals.cpp" />
     <ClCompile Include="CustomMenusAT.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="HookUtil.h" />
     <ClInclude Include="include\RNG.h" />
     <ClInclude Include="include\AimModelEdit.h" />
     <ClInclude Include="include\SimpleIni\SimpleIni.h" />
