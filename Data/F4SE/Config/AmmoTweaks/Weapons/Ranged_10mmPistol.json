@@ -1,0 +1,166 @@
+{
+	"sWeaponName": "10mm Pistol",
+	"sWeaponID": "Fallout4.esm|4822",
+	
+	"comment": ["Required Stat = Strength"],
+	"sRequiredValueID": "Fallout4.esm|2C2",
+	
+	"fBaseMaxCondition": 900.0, "fBaseWearDivisor": 1.14,
+	
+	"weaponIcons": [
+		{"iIconIndex": 37, "sRequiredKW": "none"}
+	],
+	
+	"animations": [
+		{"comment": ["Reload Anims - Action: ActionReload | Idle1P: 1stPReloadNonLM | Idle3P: RaiderReload"],
+			"iAnimID": 0,
+			"sActionID": "Fallout4.esm|4A56",
+			"sIdleID_1P": "Fallout4.esm|4D33", "sIdleID_3P": "Fallout4.esm|BDDA6", 
+			"sFinishedEvent": "reloadStateExit"
+		}
+	],
+	
+	"ammo": {
+		"calibers": [
+			{"sCaliberID": "AmmoTweaks.esm|8A1", "iReloadType": 0, "iAnimID": 0, "comment": ["10mm - ReloadType: 0 - magazine"]},
+			{"sCaliberID": "AmmoTweaks.esm|8A5", "iReloadType": 0, "iAnimID": 0, "comment": [".45 ACP - ReloadType: 0 - magazine"]}
+		],
+		"magazines": [
+			{"sName": "Large", "sMiscItemID": "AmmoTweaks.esm|11D1", "sModID": "Fallout4.esm|91FC1", "iCapacity": 24},
+			{"sName": "Small", "sMiscItemID": "AmmoTweaks.esm|11D2", "sModID": "Fallout4.esm|91FC2", "iCapacity": 12},
+			{"sName": "Large Quick", "sMiscItemID": "AmmoTweaks.esm|66DC", "sModID": "Fallout4.esm|14B73E", "iCapacity": 24},
+			{"sName": "Small Quick", "sMiscItemID": "AmmoTweaks.esm|66DD", "sModID": "Fallout4.esm|14B73F", "iCapacity": 12}
+		]
+	},
+	
+	"firemodes": [
+		{"sName": "Semi-Automatic", "comment": ["mod_at_FireMode_Pistol_SemiAuto"],
+			"sModID": "AmmoTweaks.esm|375A", "iIconIndex": 4, "iAnimID": -1,
+			"fTargetArmorMult": 1.0, "fArmorPenetration": 0.0, "fTargetDRMult": 1.0, "fWearMult": 1.0,
+			"fCritMult": 1.0, "fCritFailMult": 1.0
+		},
+		{"sName": "Automatic", "comment": ["mod_at_FireMode_Pistol_Automatic"],
+			"sModID": "AmmoTweaks.esm|375B", "iIconIndex": 5, "iAnimID": -1,
+			"fTargetArmorMult": 1.0, "fArmorPenetration": 0.0, "fTargetDRMult": 1.0, "fWearMult": 1.25,
+			"fCritMult": 0.5, "fCritFailMult": 1.25
+		},
+		{"sName": "3 Round Burst", "comment": ["mod_at_FireMode_Pistol_3RoundBurst"],
+			"sModID": "AmmoTweaks.esm|375C", "iIconIndex": 6, "iAnimID": -1,
+			"fTargetArmorMult": 1.0, "fArmorPenetration": 0.0, "fTargetDRMult": 1.0, "fWearMult": 1.1,
+			"fCritMult": 0.75, "fCritFailMult": 1.1
+		}
+	],
+	
+	"swappableMods": [
+		{"sSlotName": "Muzzles", "bShowInMenu": true, "iAnimID": -1,
+			"slotMods": [
+				{"sName": "None", "sModID": "Fallout4.esm|4F21D", "comment": ["mod_Null_Muzzle"]},
+				{"sName": "Suppressor", "sModID": "Fallout4.esm|D2A94", "bRequireModMisc": true, "comment": ["mod_10mm_Muzzle_Suppressor"]},
+				{"sName": "Compensator", "sModID": "Fallout4.esm|1483E4", "bRequireModMisc": true, "comment": ["mod_10mm_Muzzle_Compensator"]},
+				{"sName": "Muzzle Brake", "sModID": "Fallout4.esm|1483E3", "bRequireModMisc": true, "comment": ["mod_10mm_Muzzle_MuzzleBrake"]}
+			]
+		},
+		{"sSlotName": "Sights/Scopes", "bShowInMenu": true, "iAnimID": -1,
+			"slotMods": [
+				{"sName": "None", "sModID": "Fallout4.esm|148409", "comment": ["mod_10mm_Scope_SightsIron"]},
+				{"sName": "Glow Sights", "sModID": "Fallout4.esm|EA8FC", "bRequireModMisc": true, "comment": ["mod_10mm_Scope_SightsGlow"]},
+				{"sName": "Reflex Sight (off)", "sModID": "Fallout4.esm|E34D8", "bRequireModMisc": true, "comment": ["mod_10mm_Scope_SightReflex"]},
+				{"sName": "Reflex Sight (on)", "sModID": "Fallout4.esm|E34DA", "bRequireModMisc": true, "comment": ["mod_10mm_Scope_SightReflex_Circle"]},
+				{"sName": "Recon Scope", "sModID": "Fallout4.esm|184C59", "bRequireModMisc": true, "comment": ["mod_10mm_Scope_ScopeRecon"]}
+			]
+		},
+		{"sSlotName": "Magazines", "bShowInMenu": true, "iAnimID": 0, "bSaveAmmoCount": false,
+			"slotMods": [
+				{"sName": "None", "sModID": "AmmoTweaks.esm|136F", "comment": ["mod_at_Mag_Null"]},
+				{"sName": "Small", "sModID": "Fallout4.esm|91FC2", "bRequireModMisc": true, "comment": ["mod_10mm_Mag_Small"]},
+				{"sName": "Small Quick", "sModID": "Fallout4.esm|14B73F", "bRequireModMisc": true, "comment": ["mod_10mm_Mag_SmallQuick"]},
+				{"sName": "Large", "sModID": "Fallout4.esm|91FC1", "bRequireModMisc": true, "comment": ["mod_10mm_Mag_Large"]},
+				{"sName": "Large Quick", "sModID": "Fallout4.esm|14B73E", "bRequireModMisc": true, "comment": ["mod_10mm_Mag_LargeQuick"]}
+			]
+		}
+	],
+	
+	"damagedMods": [
+		{"sSlotName": "Barrel", "iAnimID": -1, "bShowInMenu": true,
+			"slotMods": [
+				{"sName": "Undamaged", "sModID": "AmmoTweaks.esm|362F", "comment": ["at_mod_gun_CNDTrait_Slot0_Barrel_0"]},
+				{"sName": "Weathered", "sModID": "AmmoTweaks.esm|362D", "comment": ["at_mod_gun_CNDTrait_Slot0_Barrel_1"]},
+				{"sName": "Warped", "sModID": "AmmoTweaks.esm|4656", "comment": ["at_mod_gun_CNDTrait_Slot0_Barrel_2"]},
+				{"sName": "Cracked", "sModID": "AmmoTweaks.esm|4E91", "comment": ["at_mod_gun_CNDTrait_Slot0_Barrel_3"]}
+			]
+		},
+		{"sSlotName": "Grip", "iAnimID": -1, "bShowInMenu": true,
+			"slotMods": [
+				{"sName": "Undamaged", "sModID": "AmmoTweaks.esm|3632", "comment": ["at_mod_gun_CNDTrait_Slot1_Grip_0"]},
+				{"sName": "Rough", "sModID": "AmmoTweaks.esm|3630", "comment": ["at_mod_gun_CNDTrait_Slot1_Grip_1"]},
+				{"sName": "Worn", "sModID": "AmmoTweaks.esm|2558", "comment": ["at_mod_gun_CNDTrait_Slot1_Grip_2"]},
+				{"sName": "Damaged", "sModID": "AmmoTweaks.esm|124E", "comment": ["at_mod_gun_CNDTrait_Slot1_Grip_3"]}
+			]
+		},
+		{"sSlotName": "Receiver", "iAnimID": -1, "bShowInMenu": true,
+			"slotMods": [
+				{"sName": "Undamaged", "sModID": "AmmoTweaks.esm|362C", "comment": ["at_mod_gun_CNDTrait_Slot2_Receiver_0"]},
+				{"sName": "Weathered", "sModID": "AmmoTweaks.esm|362A", "comment": ["at_mod_gun_CNDTrait_Slot2_Receiver_1"]},
+				{"sName": "Worn", "sModID": "AmmoTweaks.esm|4663", "comment": ["at_mod_gun_CNDTrait_Slot2_Receiver_2"]},
+				{"sName": "Cracked", "sModID": "AmmoTweaks.esm|118D", "comment": ["at_mod_gun_CNDTrait_Slot2_Receiver_3"]}
+			]
+		},
+		{"sSlotName": "Muzzle", "iAnimID": -1,
+			"slotMods": [{"sName": "Remove", "sModID": "Fallout4.esm|4F21D", "comment": ["mod_Null_Muzzle"]}]
+		},
+		{"sSlotName": "Magazine", "iAnimID": -1, "bRemoveAmmo": true,
+			"slotMods": [{"sName": "Remove", "sModID": "AmmoTweaks.esm|136F", "comment": ["mod_at_Mag_Null"]}]
+		},
+		{"sSlotName": "Scope", "iAnimID": -1,
+			"slotMods": [{"sName": "Remove", "sModID": "Fallout4.esm|148409", "comment": ["mod_10mm_Scope_SightsIron"]}]
+		}
+	],
+	
+	"critFailureTable": [
+		{"sName": "Misfire", "sSpellID": "AmmoTweaks.esm|5EB5", "iRollMax": 20, "comment": ["at_spell_CritFailure_Misfire"]},
+		{"sName": "Jam", "sSpellID": "AmmoTweaks.esm|5EC8", "iRollMax": 50, "comment": ["at_spell_CritFailure_Jam"]},
+		{"sName": "Lose Ammo", "sSpellID": "AmmoTweaks.esm|F79C", "iRollMax": 75, "comment": ["at_spell_CritFailure_LoseAmmo"]},
+		{"sName": "Damage Part", "sSpellID": "AmmoTweaks.esm|367A", "iRollMax": 94, "comment": ["at_spell_CritFailure_DamageWeapMod"]},
+		{"sName": "Explode", "sSpellID": "AmmoTweaks.esm|5ECD", "iRollMax": 255, "comment": ["at_spell_CritFailure_Explode_Gun"]}
+	],
+	
+	"visibleUnequipped": [
+		{"sName": "Pistol (R Side)",
+			"sArmorID_Holster": "none",
+			"sArmorID_Weapon": "Friffy_Holstered Weapons.esp|81B",
+			"reqKeywords": []
+		}
+	],
+	
+	"modEffects": [
+		{"sRequiredKW": "Fallout4.esm|02C874", "comment": ["dn_HasReceiver_Automatic"],
+			"fTargetArmorMult": 1.0, "fArmorPenetrationAdd": 0.0, "fTargetDRMult": 0.0, "fWearMult": 1.0,
+			"fCritMult": 1.0, "fCritFailMult": 1.0, "fMaxConditionMultAdd": 0.25
+		},
+		{"sRequiredKW": "Fallout4.esm|23844D", "comment": ["dn_HasReceiver_Automatic2"],
+			"fTargetArmorMult": 1.0, "fArmorPenetrationAdd": 0.0, "fTargetDRMult": 0.0, "fWearMult": 1.0,
+			"fCritMult": 1.0, "fCritFailMult": 1.0, "fMaxConditionMultAdd": 0.5
+		},
+		{"sRequiredKW": "Fallout4.esm|16303A", "comment": ["dn_HasReceiver_Heavy"],
+			"fTargetArmorMult": 1.0, "fArmorPenetrationAdd": 0.0, "fTargetDRMult": 0.0, "fWearMult": 1.0,
+			"fCritMult": 1.0, "fCritFailMult": 1.0, "fMaxConditionMultAdd": 0.25
+		},
+		{"sRequiredKW": "Fallout4.esm|163039", "comment": ["dn_HasReceiver_Light"],
+			"fTargetArmorMult": 1.0, "fArmorPenetrationAdd": 0.0, "fTargetDRMult": 0.0, "fWearMult": 1.0,
+			"fCritMult": 1.0, "fCritFailMult": 1.0, "fMaxConditionMultAdd": -0.25
+		},
+		{"sRequiredKW": "Fallout4.esm|02D9A6", "comment": ["dn_HasBarrel_Ported"],
+			"fTargetArmorMult": 1.0, "fArmorPenetrationAdd": 0.0, "fTargetDRMult": 0.0, "fWearMult": 1.0,
+			"fCritMult": 1.0, "fCritFailMult": 1.0, "fMaxConditionMultAdd": 0.15
+		},
+		{"sRequiredKW": "Fallout4.esm|16303D", "comment": ["dn_HasReceiver_MoreDamage1"],
+			"fTargetArmorMult": 1.0, "fArmorPenetrationAdd": 0.0, "fTargetDRMult": 0.0, "fWearMult": 1.0,
+			"fCritMult": 1.0, "fCritFailMult": 1.0, "fMaxConditionMultAdd": -0.15
+		},
+		{"sRequiredKW": "Fallout4.esm|163040", "comment": ["dn_HasReceiver_MoreDamage2"],
+			"fTargetArmorMult": 1.0, "fArmorPenetrationAdd": 0.0, "fTargetDRMult": 0.0, "fWearMult": 1.0,
+			"fCritMult": 1.0, "fCritFailMult": 1.0, "fMaxConditionMultAdd": -0.25
+		}
+	]
+	
+}

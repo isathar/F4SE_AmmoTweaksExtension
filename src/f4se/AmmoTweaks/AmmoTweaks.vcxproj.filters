@@ -1,0 +1,95 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Plugin Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2F2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Plugin Files\Include\SimpleIni">
+      <UniqueIdentifier>{da9fbb24-e920-49fd-8a1e-c0aaf6ea37be}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Plugin Files\_F4SEPlugin">
+      <UniqueIdentifier>{b80fd2ab-8e6d-440e-88f8-259c60fee55e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Plugin Files\Include">
+      <UniqueIdentifier>{cd15d7ae-5182-4d00-8adc-349b1527f8d1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Plugin Files\Include\json">
+      <UniqueIdentifier>{277c8348-42f4-4385-b4a8-69d9539021bc}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\SimpleIni\SimpleIni.h">
+      <Filter>Plugin Files\Include\SimpleIni</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Resource Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Config.h">
+      <Filter>Plugin Files\_F4SEPlugin</Filter>
+    </ClInclude>
+    <ClInclude Include="include\RNG.h">
+      <Filter>Plugin Files\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\AimModelEdit.h">
+      <Filter>Plugin Files\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="include\nlohmann\json.hpp">
+      <Filter>Plugin Files\Include\json</Filter>
+    </ClInclude>
+    <ClInclude Include="ATShared.h">
+      <Filter>Plugin Files\_F4SEPlugin</Filter>
+    </ClInclude>
+    <ClInclude Include="ConfigReader.h">
+      <Filter>Plugin Files\_F4SEPlugin</Filter>
+    </ClInclude>
+    <ClInclude Include="CustomMenusAT.h">
+      <Filter>Plugin Files\_F4SEPlugin</Filter>
+    </ClInclude>
+    <ClInclude Include="GlobalSettings.h">
+      <Filter>Plugin Files\_F4SEPlugin</Filter>
+    </ClInclude>
+    <ClInclude Include="PapyrusATGlobals.h">
+      <Filter>Plugin Files\_F4SEPlugin</Filter>
+    </ClInclude>
+    <ClInclude Include="HookUtil.h">
+      <Filter>Plugin Files\Include</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>Plugin Files\_F4SEPlugin</Filter>
+    </ClCompile>
+    <ClCompile Include="ATShared.cpp">
+      <Filter>Plugin Files\_F4SEPlugin</Filter>
+    </ClCompile>
+    <ClCompile Include="ConfigReader.cpp">
+      <Filter>Plugin Files\_F4SEPlugin</Filter>
+    </ClCompile>
+    <ClCompile Include="CustomMenusAT.cpp">
+      <Filter>Plugin Files\_F4SEPlugin</Filter>
+    </ClCompile>
+    <ClCompile Include="GlobalSettings.cpp">
+      <Filter>Plugin Files\_F4SEPlugin</Filter>
+    </ClCompile>
+    <ClCompile Include="PapyrusATGlobals.cpp">
+      <Filter>Plugin Files\_F4SEPlugin</Filter>
+    </ClCompile>
+    <ClCompile Include="HookUtil.cpp">
+      <Filter>Plugin Files\Include</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="exports.def">
+      <Filter>Plugin Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="AmmoTweaks.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

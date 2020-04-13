@@ -1,0 +1,88 @@
+{
+	"modName": "AmmoTweaks",
+	"keybinds": [
+		{
+			"id": "AT_SwapAmmo",
+			"desc": "$ATMCM_HotKeyDescNextAmmo",
+			"action": {
+				"type": "CallGlobalFunction",
+				"script": "AT:Globals",
+				"function": "Hotkey_SwapMod",
+				"params": [-1, -1]
+			}
+		},
+		{
+			"id": "AT_SwapFiremode",
+			"desc": "$ATMCM_HotKeyDescNextFM",
+			"action": {
+				"type": "CallGlobalFunction",
+				"script": "AT:Globals",
+				"function": "Hotkey_SwapMod",
+				"params": [0, -1]
+			}
+		},
+		
+		{
+			"id": "AT_UnjamWeapon",
+			"desc": "$ATMCM_HotKeyDescClearJam",
+			"action": {
+				"type": "CallGlobalFunction",
+				"script": "AT:Globals",
+				"function": "Hotkey_UnJamWeapon",
+				"params": []
+			}
+		},
+		
+		{
+			"id": "AT_ShowWpnMenu",
+			"desc": "$ATMCM_HotKeyDescToggleMenu",
+			"action": {
+				"type": "CallGlobalFunction",
+				"script": "AT:Globals",
+				"function": "Hotkey_ShowWeaponMenu",
+				"params": []
+			}
+		},
+		
+		{
+			"id": "AT_WpnMenuUp",
+			"desc": "$ATMCM_HotKeyWpnMenuUp",
+			"action": {
+				"type": "CallGlobalFunction",
+				"script": "AT:Globals",
+				"function": "Hotkey_WpnMenuNav",
+				"params": [0]
+			}
+		},
+		{
+			"id": "AT_WpnMenuRight",
+			"desc": "$ATMCM_HotKeyWpnMenuRight",
+			"action": {
+				"type": "CallGlobalFunction",
+				"script": "AT:Globals",
+				"function": "Hotkey_WpnMenuNav",
+				"params": [1]
+			}
+		},
+		{
+			"id": "AT_WpnMenuDown",
+			"desc": "$ATMCM_HotKeyWpnMenuDown",
+			"action": {
+				"type": "CallGlobalFunction",
+				"script": "AT:Globals",
+				"function": "Hotkey_WpnMenuNav",
+				"params": [2]
+			}
+		},
+		{
+			"id": "AT_WpnMenuLeft",
+			"desc": "$ATMCM_HotKeyWpnMenuLeft",
+			"action": {
+				"type": "CallGlobalFunction",
+				"script": "AT:Globals",
+				"function": "Hotkey_WpnMenuNav",
+				"params": [3]
+			}
+		}
+	]
+}

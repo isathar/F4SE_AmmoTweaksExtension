@@ -1,0 +1,73 @@
+{
+	"sCaliberName": ".45 ACP",
+	"sCaliberID": "AmmoTweaks.esm|8A5",
+	
+	"sRecipeID": "AmmoTweaks.esm|1CB3",
+	
+	"comment": [
+		"caliber keyword: at_dn_HasAmmo_45ACP", "recipe keyword: at_ma_Caliber_45ACP",
+		"Loot LevItem: LL_at_AmmoLoot_45ACP, Scrounger LevItem: LLS_Perk_Scrounger_45Caliber"
+	],
+	
+	"fBaseTargetArmorMult": 1.2, "fBaseArmorPenetration": 0.0, "fBaseWear": 1.4,
+	"fBaseCritMult": 1.2, "fBaseCritFailMult": 1.1,
+	
+	"sLeveledItemLoot": "AmmoTweaks.esm|E74",
+	"sLeveledItemScrounger": "Fallout4.esm|5859D",
+	"iLeveledItemChance": 45,
+	
+	"ammoTypes": [
+		{"sName": "FMJ", "sAmmoID": "Fallout4.esm|1F66A", "sModID": "AmmoTweaks.esm|1230",
+			"comment": [
+				"AmmoItem: Ammo45Caliber",
+				"AmmoMod: mod_at_Caliber_Gun_45ACP_0_FMJ",
+				"CasingItem: at_c_SpentCasing_45ACP"
+			],
+			"fArmorPenetration": 0.0, "fWearMult": 1.0,
+			"fCritMult": 1.0, "fCritFailMult": 1.0,
+			"sCasingID": "AmmoTweaks.esm|854", "fCasingChance": 0.03
+		},
+		{"sName": "JHP", "sAmmoID": "AmmoTweaks.esm|802", "sModID": "AmmoTweaks.esm|1BCE",
+			"comment": [
+				"AmmoItem: at_ammo_45ACP_JHP",
+				"AmmoMod: mod_at_Caliber_Gun_45ACP_1_JHP",
+				"CasingItem: at_c_SpentCasing_45ACP"
+			],
+			"fTargetArmorMult": 2.0, "fArmorPenetration": 0.0, "fWearMult": 0.92,
+			"fCritMult": 1.5, "fCritFailMult": 1.1,
+			"sCasingID": "AmmoTweaks.esm|854", "fCasingChance": 0.02
+		},
+		{"sName": "+P", "sAmmoID": "AmmoTweaks.esm|801", "sModID": "AmmoTweaks.esm|1BD0",
+			"comment": [
+				"AmmoItem: at_ammo_45ACP_P",
+				"AmmoMod: mod_at_Caliber_Gun_45ACP_2_P",
+				"CasingItem: at_c_SpentCasing_45ACP"
+			],
+			"fTargetArmorMult": 1.0, "fArmorPenetration": 10.0, "fWearMult": 1.16,
+			"fCritMult": 1.1, "fCritFailMult": 1.2,
+			"sCasingID": "AmmoTweaks.esm|854", "fCasingChance": 0.02
+		}
+	],
+	
+	"projectiles": [
+		{"comment": ["kws: HasLegendary_Weapon_ExplosiveBullets"],
+			"sProjectileID": "AmmoTweaks.esm|27D8", "sImpactDataSetID": "AmmoTweaks.esm|379D",
+			"reqKeywords": ["Fallout4.esm|1E73BC"]
+		},
+		{"comment": ["kws: dn_HasMuzzle_Suppressor"],
+			"sProjectileID": "AmmoTweaks.esm|1DE0", "sImpactDataSetID": "AmmoTweaks.esm|B45", 
+			"reqKeywords": ["Fallout4.esm|16304E"]
+		},
+		{"comment": ["kws: dn_HasMuzzle_MuzzleBreak"],
+			"sProjectileID": "AmmoTweaks.esm|35DC", "sImpactDataSetID": "AmmoTweaks.esm|B45", 
+			"reqKeywords": ["Fallout4.esm|16304D"]
+		},
+		{"comment": ["kws: dn_HasMuzzle_Compensator"],
+			"sProjectileID": "AmmoTweaks.esm|35DC", "sImpactDataSetID": "AmmoTweaks.esm|B45", 
+			"reqKeywords": ["Fallout4.esm|16304C"]
+		},
+		{"comment": ["kws: none"],
+			"sProjectileID": "AmmoTweaks.esm|BDD", "sImpactDataSetID": "AmmoTweaks.esm|B45"
+		}
+	]
+}

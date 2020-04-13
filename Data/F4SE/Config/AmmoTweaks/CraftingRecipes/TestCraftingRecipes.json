@@ -1,0 +1,30 @@
+{
+	"sRecipeListName": "Crafting Recipes test",
+	
+	"comment": ["iType variable",
+		"output: 0 = item, 1 = equippedWeapon, 2 = workbenchUpgrade",
+		"ingredients: "0 = compo, 1 = invItem",
+		"conditions: 0 = Global, 1 = AV, 2 = Perk, 3 = invItems, 4 = workbenchKWs"
+	],
+	
+	"recipes": [
+		{"sName": "RecipeName", "sCategory": "MenuCategory",
+			"sDescription": "Description text",
+			"output": [
+				{"iType": 0, "sFormID": "blah.esm|123456", "iCount": 1, "fTime": 0.5}
+			],
+			"ingredients": [
+				{"comment": ["Component"], "iType": 0, "sFormID": "blah2.esp|13", "iCount": 4},
+				{"comment": ["Item"], "iType": 1, "sFormID": "blah3.esl|ABC", "iCount": 7}
+			],
+			"conditions": [
+				{"comment": ["Global"], "iType": 0, "sFormID": "blah.esm|1", "sValueOp": ">=", "fValue": 0.0, "sCondOp": "AND"},
+				{"comment": ["ActorValue"], "iType": 1, "sFormID": "blah.esm|2", "sValueOp": ">=", "fValue": 0.0, "sCondOp": "AND"},
+				{"comment": ["Perk"], "iType": 2, "sFormID": "blah.esm|3", "sCondOp": "AND"},
+				{"comment": ["InvItem"], "iType": 3, "sFormID": "blah.esm|4", "fValue": 1.0, "sCondOp": "AND"},
+				{"comment": ["WorkbenchKW"], "iType": 4, "sFormID": "blah.esm|5", "fValue": 1.0, "sCondOp": "OR"}
+			]
+		}
+	]
+	
+}

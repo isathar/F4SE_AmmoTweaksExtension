@@ -1,0 +1,115 @@
+{
+	"sCaliberName": "10mm Auto",
+	"sCaliberID": "AmmoTweaks.esm|8A1",
+	
+	"sRecipeID": "AmmoTweaks.esm|1CB6",
+	
+	"comment": [
+		"caliber keyword: at_dn_HasAmmo_10mm", "recipe keyword: at_ma_Caliber_10mmAuto",
+		"Loot LevItem: LL_at_AmmoLoot_10mm, Scrounger LevItem: LLS_Perk_Scrounger_10mm"
+	],
+	
+	"fBaseTargetArmorMult": 1.1, "fBaseArmorPenetration": 0.0, "fBaseWear": 1.14,
+	"fBaseCritMult": 1.0, "fBaseCritFailMult": 1.0,
+	
+	"sLeveledItemLoot": "AmmoTweaks.esm|E46",
+	"sLeveledItemScrounger": "Fallout4.esm|249F04",
+	"iLeveledItemChance": 34,
+	
+	"ammoTypes": [
+		{"sName": "FMJ", "sAmmoID": "Fallout4.esm|1F276", "sModID": "AmmoTweaks.esm|2542",
+			"comment": [
+				"AmmoItem: Ammo10mm",
+				"AmmoMod: mod_at_Caliber_Gun_10mmAuto_0_FMJ",
+				"CasingItem: at_c_SpentCasing_10mm_scrap"
+			],
+			"fTargetArmorMult": 1.0, "fArmorPenetration": 0.0, "fWearMult": 1.0,
+			"fCritMult": 1.0, "fCritFailMult": 1.0,
+			"sCasingID": "AmmoTweaks.esm|84D", "fCasingChance": 0.03
+		},
+		{"sName": "JHP", "sAmmoID": "AmmoTweaks.esm|F9A", "sModID": "AmmoTweaks.esm|5D91",
+			"comment": [
+				"AmmoItem: at_Ammo_10mm_JHP",
+				"AmmoMod: mod_at_Caliber_Gun_10mmAuto_1_JHP",
+				"CasingItem: at_c_SpentCasing_10mm_scrap",
+				"LegendaryAmmoList: LL_at_AmmoWeap_10mm_JHP"
+			],
+			"fTargetArmorMult": 2.0, "fArmorPenetration": 0.0, "fWearMult": 0.92,
+			"fCritMult": 1.5, "fCritFailMult": 1.1,
+			"sCasingID": "AmmoTweaks.esm|84D", "fCasingChance": 0.02,
+			"sLegendaryAmmoList": "AmmoTweaks.esm|1B40"
+		},
+		{"sName": "AP", "sAmmoID": "AmmoTweaks.esm|F99", "sModID": "AmmoTweaks.esm|5D93",
+			"comment": [
+				"AmmoItem: at_Ammo_10mm_AP",
+				"AmmoMod: mod_at_Caliber_Gun_10mmAuto_2_AP",
+				"CasingItem: at_c_SpentCasing_10mm_scrap",
+				"LegendaryAmmoList: LL_at_AmmoWeap_10mm_AP"
+			],
+			"fTargetArmorMult": 1.0, "fArmorPenetration": 50.0, "fWearMult": 1.15,
+			"fCritMult": 1.0, "fCritFailMult": 1.2,
+			"sCasingID": "AmmoTweaks.esm|84D", "fCasingChance": 0.02,
+			"sLegendaryAmmoList": "AmmoTweaks.esm|1B41"
+		},
+		{"sName": "SD", "sAmmoID": "AmmoTweaks.esm|1C99", "sModID": "AmmoTweaks.esm|5D94",
+			"comment": [
+				"AmmoItem: at_Ammo_10mm_SD",
+				"AmmoMod: mod_at_Caliber_Gun_10mmAuto_3_SD",
+				"CasingItem: at_c_SpentCasing_10mm_scrap",
+				"LegendaryAmmoList: LL_at_AmmoWeap_10mm_SD"
+			],
+			"fTargetArmorMult": 1.5, "fArmorPenetration": 0.0, "fWearMult": 1.2,
+			"fCritMult": 1.2, "fCritFailMult": 1.2,
+			"sCasingID": "AmmoTweaks.esm|84D", "fCasingChance": 0.04,
+			"sLegendaryAmmoList": "AmmoTweaks.esm|1B42"
+		}
+	],
+	
+	"projectiles": [
+		{"comment": ["kws: at_kw_IsSubsonicAmmo + HasLegendary_Weapon_ExplosiveBullets"],
+			"sProjectileID": "AmmoTweaks.esm|5197", "sImpactDataSetID": "AmmoTweaks.esm|379D", 
+			"reqKeywords": ["AmmoTweaks.esm|1B3C", "Fallout4.esm|1E73BC"]
+		},
+		{"comment": ["kws: at_kw_IsSubsonicAmmo + dn_HasMuzzle_Suppressor"],
+			"sProjectileID": "AmmoTweaks.esm|4DA8", "sImpactDataSetID": "AmmoTweaks.esm|B45", 
+			"reqKeywords": ["AmmoTweaks.esm|1B3C", "Fallout4.esm|16304E"]
+		},
+		{"comment": ["kws: at_kw_IsSubsonicAmmo + dn_HasMuzzle_MuzzleBreak"],
+			"sProjectileID": "AmmoTweaks.esm|2DA3", "sImpactDataSetID": "AmmoTweaks.esm|B45", 
+			"reqKeywords": ["AmmoTweaks.esm|1B3C", "Fallout4.esm|16304D"]
+		},
+		{"comment": ["kws: at_kw_IsSubsonicAmmo + dn_HasMuzzle_Compensator"],
+			"sProjectileID": "AmmoTweaks.esm|2DA3", "sImpactDataSetID": "AmmoTweaks.esm|B45", 
+			"reqKeywords": ["AmmoTweaks.esm|1B3C", "Fallout4.esm|16304C"]
+		},
+		
+		{"comment": ["kws: HasLegendary_Weapon_ExplosiveBullets"],
+			"sProjectileID": "AmmoTweaks.esm|1EAB", "sImpactDataSetID": "AmmoTweaks.esm|379D",
+			"reqKeywords": ["Fallout4.esm|1E73BC"]
+		},
+		{"comment": ["kws: at_kw_IsSubsonicAmmo"],
+			"sProjectileID": "AmmoTweaks.esm|268C", "sImpactDataSetID": "AmmoTweaks.esm|B45", 
+			"reqKeywords": ["AmmoTweaks.esm|1B3C"]
+		},
+		{"comment": ["kws: dn_HasMuzzle_Suppressor"],
+			"sProjectileID": "AmmoTweaks.esm|1542", "sImpactDataSetID": "AmmoTweaks.esm|B45", 
+			"reqKeywords": ["Fallout4.esm|16304E"]
+		},
+		{"comment": ["kws: dn_HasMuzzle_MuzzleBreak"],
+			"sProjectileID": "AmmoTweaks.esm|2DA2", "sImpactDataSetID": "AmmoTweaks.esm|B45", 
+			"reqKeywords": ["Fallout4.esm|16304D"]
+		},
+		{"comment": ["kws: dn_HasMuzzle_Compensator"],
+			"sProjectileID": "AmmoTweaks.esm|2DA2", "sImpactDataSetID": "AmmoTweaks.esm|B45", 
+			"reqKeywords": ["Fallout4.esm|16304C"]
+		},
+		
+		{"comment": ["kws: none"],
+			"sProjectileID": "AmmoTweaks.esm|838", "sImpactDataSetID": "AmmoTweaks.esm|B45"
+		}
+	],
+	
+	"legendaryAmmoData": [
+		
+	]
+}

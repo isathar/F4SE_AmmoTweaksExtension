@@ -1,0 +1,962 @@
+{
+	"minMcmVersion": 4,
+	"modName": "AmmoTweaks",
+	"displayName": "AmmoTweaks",
+	"pluginRequirements": ["AmmoTweaks.esm"],
+	"content": [
+		{
+			"text": "<p align='center'><font size='30'>AmmoTweaks 2.0</font></p>",
+			"html": true,
+			"type": "text"
+		},
+		
+		{
+			"text": " ",
+			"type": "section"
+		},
+
+		{
+			"type": "spacer",
+			"numLines": 1
+		},
+		{
+			"id": "bEnableWpnCND:WeaponCondition",
+			"text": "$ATMCM_SettingNameWpnCND",
+			"type": "switcher",
+			"help": "$ATMCM_SettingDescWpnCND",
+			"valueOptions": {
+				"sourceType": "ModSettingBool"
+			}
+		},
+		{
+			"id": "fMinStartingCND:WeaponCondition",
+			"text": "$ATMCM_SettingNameWpnCNDMin",
+			"type": "slider",
+			"help": "$ATMCM_SettingDescWpnCNDMin",
+			"valueOptions": {
+				"min": 0.00,
+				"max": 1.00,
+				"step": 0.05,
+				"sourceType": "ModSettingFloat"
+			}
+		},
+		{
+			"type": "spacer",
+			"numLines": 1
+		},
+		
+		{
+			"id": "bEnableSkillReqs:SkillRequirements",
+			"text": "$ATMCM_SettingNameSkillReqs",
+			"type": "switcher",
+			"help": "$ATMCM_SettingDescSkillReqs",
+			"valueOptions": {
+				"sourceType": "ModSettingBool"
+			}
+		},
+		{
+			"id": "fMaxSkillReq:SkillRequirements",
+			"text": "$ATMCM_SettingNameSkillReqMax",
+			"type": "slider",
+			"help": "$ATMCM_SettingDescSkillReqMax",
+			"valueOptions": {
+				"min": 1.0,
+				"max": 100.0,
+				"step": 1.0,
+				"sourceType": "ModSettingFloat"
+			}
+		},
+		{
+			"id": "fMaxWeight:SkillRequirements",
+			"text": "$ATMCM_SettingNameSkillReqWeight",
+			"type": "slider",
+			"help": "$ATMCM_SettingDescSkillReqWeight",
+			"valueOptions": {
+				"min": 1.0,
+				"max": 100.0,
+				"step": 1.0,
+				"sourceType": "ModSettingFloat"
+			}
+		},
+		{
+			"type": "spacer",
+			"numLines": 1
+		},
+		
+		{
+			"id": "bUseClassicCrits:CriticalHits",
+			"text": "$ATMCM_SettingNameCritHits",
+			"type": "switcher",
+			"help": "$ATMCM_SettingDescCritHits",
+			"valueOptions": {
+				"sourceType": "ModSettingBool"
+			}
+		},
+		{
+			"id": "bUseReallyClassicCrits:CriticalHits",
+			"text": "$ATMCM_SettingNameCritTables",
+			"type": "switcher",
+			"help": "$ATMCM_SettingDescCritTables",
+			"valueOptions": {
+				"sourceType": "ModSettingBool"
+			}
+		},
+		{
+			"type": "spacer",
+			"numLines": 2
+		},
+		
+		{
+			"id": "bUseCritFailureTables:CriticalHits",
+			"text": "$ATMCM_SettingNameCritFail",
+			"type": "switcher",
+			"help": "$ATMCM_SettingDescCritFail",
+			"valueOptions": {
+				"sourceType": "ModSettingBool"
+			}
+		},
+		{
+			"type": "spacer",
+			"numLines": 2
+		}
+		
+	],
+	"pages": [
+		{
+			"pageDisplayName": "$ATMCM_SectionHotkeys",
+			"content": [
+				{
+					"type": "spacer",
+					"numLines": 1
+				},
+				
+				{
+					"id": "AT_SwapAmmo",
+					"text": "$ATMCM_HotKeyNameNextAmmo",
+					"type": "hotkey",
+					"help": "$ATMCM_HotKeyDescNextAmmo",
+					"valueOptions": {
+						"allowModifierKeys": true
+					}
+				},
+				{
+					"id": "AT_SwapFiremode",
+					"text": "$ATMCM_HotKeyNameNextFM",
+					"type": "hotkey",
+					"help": "$ATMCM_HotKeyDescNextFM",
+					"valueOptions": {
+						"allowModifierKeys": true
+					}
+				},
+				{
+					"id": "AT_UnjamWeapon",
+					"text": "$ATMCM_HotKeyNameClearJam",
+					"type": "hotkey",
+					"help": "$ATMCM_HotKeyDescClearJam",
+					"valueOptions": {
+						"allowModifierKeys": true
+					}
+				},
+				{
+					"type": "spacer",
+					"numLines": 1
+				},
+				{
+					"id": "AT_ShowWpnMenu",
+					"text": "$ATMCM_HotKeyNameToggleMenu",
+					"type": "hotkey",
+					"help": "$ATMCM_HotKeyDescToggleMenu",
+					"valueOptions": {
+						"allowModifierKeys": true
+					}
+				},
+				{
+					"id": "AT_WpnMenuUp",
+					"text": "$ATMCM_HotKeyWpnMenuUp",
+					"type": "hotkey",
+					"help": "$ATMCM_HotKeyDescWpnMenuUp",
+					"valueOptions": {
+						"allowModifierKeys": true
+					}
+				},
+				{
+					"id": "AT_WpnMenuRight",
+					"text": "$ATMCM_HotKeyWpnMenuRight",
+					"type": "hotkey",
+					"help": "$ATMCM_HotKeyDescWpnMenuRight",
+					"valueOptions": {
+						"allowModifierKeys": true
+					}
+				},
+				{
+					"id": "AT_WpnMenuDown",
+					"text": "$ATMCM_HotKeyWpnMenuDown",
+					"type": "hotkey",
+					"help": "$ATMCM_HotKeyDescWpnMenuDown",
+					"valueOptions": {
+						"allowModifierKeys": true
+					}
+				},
+				{
+					"id": "AT_WpnMenuLeft",
+					"text": "$ATMCM_HotKeyWpnMenuLeft",
+					"type": "hotkey",
+					"help": "$ATMCM_HotKeyDescWpnMenuLeft",
+					"valueOptions": {
+						"allowModifierKeys": true
+					}
+				},
+				{
+					"type": "spacer",
+					"numLines": 2
+				}
+			]
+		},
+		{
+			"pageDisplayName": "Ammo Chances (Default)",
+			"content": [
+				{
+					"text": "Configure the chances of default ammo types appearing in loot/vendor lists they're included in.",
+					"type": "text"
+				},
+				{
+					"text": "NOTE: Due to the way loot chances work, these values are reversed. (100% == 0% and 0% == 100%) ",
+					"type": "text"
+				},
+				{
+					"type": "spacer",
+					"numLines": 1
+				},
+				
+				{
+					"text": "10mm Auto",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|151C"
+					}
+				},
+				{
+					"text": ".45 ACP",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|1529"
+					}
+				},
+				{
+					"text": ".38 Super",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|1528"
+					}
+				},
+				{
+					"text": ".44 Magnum",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|1525"
+					}
+				},
+				{
+					"text": ".308 Caliber",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|1520"
+					}
+				},
+				{
+					"text": ".50 MG",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|14EF"
+					}
+				},
+				{
+					"text": "5.56x45mm",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|14F0"
+					}
+				},
+				{
+					"text": "12 Gauge",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|152C"
+					}
+				},
+				{
+					"type": "spacer",
+					"numLines": 1
+				},
+				{
+					"text": "Fusion Cells",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|1503"
+					}
+				},
+				{
+					"text": "Gamma Cells",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|1505"
+					}
+				},
+				{
+					"text": "Plasma Cartridges",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|1506"
+					}
+				},
+				{
+					"text": "2mm EM Cartridges",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|151F"
+					}
+				},
+				{
+					"text": "Cryo Cells",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|1507"
+					}
+				},
+				{
+					"text": "Alien Cells",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|1502"
+					}
+				},
+				{
+					"type": "spacer",
+					"numLines": 1
+				},
+				{
+					"text": "Flamer Fuel",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|150D"
+					}
+				},
+				{
+					"text": "Fusion Cores",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|150A"
+					}
+				},
+				{
+					"type": "spacer",
+					"numLines": 1
+				},
+				{
+					"text": "Missiles",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|1508"
+					}
+				},
+				{
+					"text": "Mini Nukes",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|1509"
+					}
+				},
+				{
+					"type": "spacer",
+					"numLines": 1
+				},
+				
+				{
+					"text": "Cannonballs",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|150B"
+					}
+				},
+				{
+					"text": "Railroad Spike",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|14B8"
+					}
+				},
+				
+				
+				{
+					"type": "spacer",
+					"numLines": 1
+				}
+				
+			]
+		},
+		{
+			"pageDisplayName": "Ammo Chances (New)",
+			"content": [
+				{
+					"text": "Configure the chances of ammo types added by AmmoTweaks appearing in loot/vendor lists they're included in.",
+					"type": "text"
+				},
+				{
+					"text": "NOTE: Due to the way loot chances work, these values are reversed. (100% == 0% and 0% == 100%) ",
+					"type": "text"
+				},
+				{
+					"type": "spacer",
+					"numLines": 1
+				},
+				
+				{
+					"text": ".22LR",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|151E"
+					}
+				},
+				{
+					"text": ".32 ACP",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|1522"
+					}
+				},
+				{
+					"text": ".380 ACP",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|1527"
+					}
+				},
+				{
+					"text": "9x18mm PM",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|14F5"
+					}
+				},
+				{
+					"text": "9x19mm",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|152B"
+					}
+				},
+				
+				{
+					"type": "spacer",
+					"numLines": 1
+				},
+				{
+					"text": ".38 Special",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|1536"
+					}
+				},
+				{
+					"text": ".44 Special",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|1537"
+					}
+				},
+				{
+					"text": ".357 Magnum",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|1523"
+					}
+				},
+				{
+					"text": ".45 LC",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|1524"
+					}
+				},
+				{
+					"text": ".45-70 (replaces DLC Far Harbor .45-70 if installed)",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|1526"
+					}
+				},
+				
+				{
+					"type": "spacer",
+					"numLines": 1
+				},
+				{
+					"text": ".223 Caliber",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|151D"
+					}
+				},
+				{
+					"text": ".30-06",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|152F"
+					}
+				},
+				{
+					"text": ".300 Magnum",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|31BC"
+					}
+				},
+				{
+					"text": ".338 Magnum",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|1521"
+					}
+				},
+				
+				{
+					"type": "spacer",
+					"numLines": 1
+				},
+				{
+					"text": ".30 Carbine",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|1530"
+					}
+				},
+				{
+					"text": "5.7x28mm",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|6230"
+					}
+				},
+				{
+					"text": "9x39mm",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|14F7"
+					}
+				},
+				{
+					"text": "7.92x33mmK",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|14F6"
+					}
+				},
+				
+				{
+					"type": "spacer",
+					"numLines": 1
+				},
+				{
+					"text": "5.45x39mm",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|14F1"
+					}
+				},
+				{
+					"text": "7.62x39mm (replaces DLC Nuka-World 7.62 if installed)",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|14F3"
+					}
+				},
+				{
+					"text": "7.62x54mmR",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|14F4"
+					}
+				},
+				
+				{
+					"type": "spacer",
+					"numLines": 1
+				},
+				{
+					"text": "20 Gauge",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|152D"
+					}
+				},
+				
+				{
+					"type": "spacer",
+					"numLines": 1
+				},
+				{
+					"text": "Small Energy Cells",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|70EC"
+					}
+				},
+				
+				{
+					"type": "spacer",
+					"numLines": 1
+				},
+				{
+					"text": "Harpoons (replaces Far Harbor Harpoons if installed)",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0,
+						"max": 100,
+						"step": 1,
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|150C"
+					}
+				},
+				
+				{
+					"type": "spacer",
+					"numLines": 1
+				}
+			]
+		},
+		{
+			"pageDisplayName": "HUD",
+			"content": [
+				{
+					"text": "HUD Overlay Settings",
+					"type": "text"
+				},
+				
+				{
+					"type": "spacer",
+					"numLines": 1
+				},
+				{
+					"id": "bHUDEnableColorChanges:HUD",
+					"text": "$ATMCM_SettingNameHUDColors",
+					"type": "switcher",
+					"help": "$ATMCM_SettingDescHUDColors",
+					"valueOptions": {
+						"sourceType": "ModSettingBool"
+					}
+				},
+				
+				{
+					"type": "spacer",
+					"numLines": 1
+				},
+				{
+					"id": "bHUDUseCustomBaseColor:HUD",
+					"text": "Custom HUD Base Color",
+					"type": "switcher",
+					"valueOptions": {
+						"sourceType": "ModSettingBool"
+					}
+				},
+				{
+					"text": "  Color:",
+					"type": "text"
+				},
+				{
+					"id": "fHUDBaseColorR:HUD",
+					"text": "      Red",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0.00,
+						"max": 1.00,
+						"step": 0.01,
+						"sourceType": "ModSettingFloat"
+					}
+				},
+				{
+					"id": "fHUDBaseColorG:HUD",
+					"text": "      Green",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0.00,
+						"max": 1.00,
+						"step": 0.01,
+						"sourceType": "ModSettingFloat"
+					}
+				},
+				{
+					"id": "fHUDBaseColorB:HUD",
+					"text": "      Blue",
+					"type": "slider",
+					"valueOptions": {
+						"min": 0.00,
+						"max": 1.00,
+						"step": 0.01,
+						"sourceType": "ModSettingFloat"
+					}
+				},
+				
+				{
+					"type": "spacer",
+					"numLines": 1
+				},
+				
+				{
+					"id": "bHUDSwitchCNDToDirt:HUD",
+					"text": "$ATMCM_SettingNameCNDasDIRT",
+					"type": "switcher",
+					"help": "$ATMCM_SettingDescCNDasDIRT",
+					"valueOptions": {
+						"sourceType": "ModSettingBool"
+					}
+				},
+				
+				{
+					"type": "spacer",
+					"numLines": 2
+				}
+			]
+		},
+		{
+			"pageDisplayName": "Misc Tweaks",
+			"content": [
+				{
+					"text": "Misc Tweaks",
+					"type": "text"
+				},
+				{
+					"type": "spacer",
+					"numLines": 1
+				},
+				
+				{
+					"text": "Flamer Fire Damage",
+					"type": "switcher",
+					"help": "Converts the Flamer's damage type from energy to fire.",
+					"valueOptions": {
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|10EE1"
+					}
+				},
+				{
+					"text": "Shishkebap Fire Damage",
+					"type": "switcher",
+					"help": "Converts the Shishkebap's damage type from energy to fire.",
+					"valueOptions": {
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|2591"
+					}
+				},
+				{
+					"text": "Cryolator Cryo Damage",
+					"type": "switcher",
+					"help": "Converts the Cryolator's damage type from energy to cryo.",
+					"valueOptions": {
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|2592"
+					}
+				},
+				{
+					"text": "Tesla Cannon Electrical Damage",
+					"type": "switcher",
+					"help": "Converts the Tesla Cannon's damage type from energy to electrical. (requires the Automatron DLC)",
+					"valueOptions": {
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|2595"
+					}
+				},
+				{
+					"type": "spacer",
+					"numLines": 1
+				},
+				
+				{
+					"text": "Use Default Armor Penetration",
+					"type": "switcher",
+					"help": "Enables default armor penetration values from weapon mods (not recommended)",
+					"valueOptions": {
+						"sourceType": "GlobalValue",
+						"sourceForm": "AmmoTweaks.esm|46D2"
+					}
+				},
+				
+				{
+					"type": "spacer",
+					"numLines": 2
+				}
+			]
+		}
+	]
+}
